@@ -1,12 +1,9 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-<link rel="icon" href="logo_192.png">
-<link rel="apple-touch-icon" href="logo_192.png">
-<meta name="theme-color" content="#1a0000">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
-<title>地獄列車 3D</title>
+<title>地獄列車</title>
 <style>
 html,body{margin:0;height:100%;background:#000;overflow:hidden;touch-action:none;user-select:none;font-family:sans-serif}
 canvas{display:block}
@@ -14,7 +11,7 @@ canvas{display:block}
 #stat{color:#7fdbff;font-size:15px}
 #flash{position:fixed;inset:0;background:#f00;opacity:0;pointer-events:none}
 #stage{position:fixed;left:0;right:0;top:30%;text-align:center;color:#ff3b30;font-size:34px;font-weight:bold;text-shadow:0 0 10px #000;opacity:0;pointer-events:none;transition:opacity .4s}
-#toast{position:fixed;left:50%;top:70px;transform:translateX(-50%);background:#1b1b1b;border:2px solid #f1c40f;color:#fff;padding:10px 16px;border-radius:12px;font-size:15px;opacity:0;pointer-events:none;transition:opacity .3s;z-index:99;text-align:center}
+#toast{position:fixed;left:50%;top:70px;transform:translateX(-50%);background:#1b1b1b;border:2px solid #f1c40f;color:#fff;padding:10px 16px;border-radius:12px;font-size:15px;opacity:0;pointer-events:none;transition:opacity .3s;z-index:99;text-align:center;max-width:86vw}
 #pause{position:fixed;right:12px;top:10px;width:46px;height:46px;border-radius:12px;border:0;background:rgba(255,255,255,.2);color:#fff;font-size:20px;display:none}
 #ui{position:fixed;left:50%;transform:translateX(-50%);bottom:max(14px,env(safe-area-inset-bottom));display:none;flex-direction:column;gap:8px;width:min(92vw,360px)}
 .row{display:flex;gap:8px;align-items:center}
@@ -25,19 +22,28 @@ canvas{display:block}
 .scr>:first-child{margin-top:auto}.scr>:last-child{margin-bottom:auto}
 .scr h1{color:#ff3b30;font-size:44px;margin:6px;text-shadow:0 0 14px #f00}
 .scr h2{color:#ff6b4a;margin:6px}
-.menu{display:flex;flex-direction:column;gap:10px;width:min(80vw,300px);margin-top:10px}
+.menu{display:flex;flex-direction:column;gap:10px;width:min(86vw,320px);margin-top:10px}
 .btn{padding:13px 20px;font-size:19px;background:#7b1a14;border:1px solid #ff5a3c;border-radius:12px;color:#fff}
-.btn.main{background:#c0392b;font-size:24px;padding:16px}
+.btn.main{background:#c0392b;font-size:26px;padding:18px}
 .btn:active{filter:brightness(1.4)}
 .btn:disabled{opacity:.4}
-.card{background:rgba(0,0,0,.45);border:1px solid #6b1a10;border-radius:12px;padding:10px 14px;margin:6px 0;width:min(88vw,360px);box-sizing:border-box;font-size:14px;line-height:1.6}
+.card{background:rgba(0,0,0,.45);border:1px solid #6b1a10;border-radius:12px;padding:10px 14px;margin:6px 0;width:min(90vw,380px);box-sizing:border-box;font-size:14px;line-height:1.6}
 .item{display:flex;justify-content:space-between;align-items:center;gap:8px;text-align:left;margin:4px 0}
 .item .btn{font-size:14px;padding:8px 12px;white-space:nowrap}
-.dot{background:#f33;border-radius:10px;padding:0 7px;font-size:12px;margin-left:6px}
+.dot{background:#f33;border-radius:10px;padding:0 6px;font-size:12px;margin-left:4px}
+.chips,.tabs{display:flex;gap:8px;margin:8px 0;flex-wrap:wrap;justify-content:center}
+.chip{padding:8px 14px;border-radius:20px;border:1px solid #ff5a3c;background:#2a0a08;color:#fff;font-size:14px}
+.chip.on{background:#c0392b;box-shadow:0 0 8px #f33}
+.nav{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;width:min(92vw,380px);margin-top:14px}
+.nav .btn{padding:10px 2px;font-size:14px;line-height:1.3}
 textarea{width:100%;height:70px;background:#200;color:#fff;border:1px solid #a33;border-radius:8px;font-size:11px;box-sizing:border-box}
 .sw{display:inline-block;width:18px;height:18px;border-radius:4px;margin-right:3px;vertical-align:middle}
 .bar{height:6px;background:#333;border-radius:4px;margin-top:3px}.bar i{display:block;height:100%;background:#2ecc71;border-radius:4px}
 .small{color:#aaa;font-size:12px}
+.tag{background:#f1c40f;color:#000;border-radius:6px;padding:1px 6px;font-size:12px;font-weight:bold}
+.days{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin:8px 0}
+.days div{background:#2a0a08;border:1px solid #5a1a10;border-radius:8px;padding:6px 0;font-size:11px}
+.days .on{background:#27ae60}.days .now{border-color:#f1c40f;box-shadow:0 0 8px #f1c40f}
 </style>
 </head>
 <body>
@@ -56,14 +62,15 @@ textarea{width:100%;height:70px;background:#200;color:#fff;border:1px solid #a33
   <h1>地獄列車</h1>
   <div class="small">雙節列車・軌道求生</div>
   <div class="card" id="lobbyInfo"></div>
-  <div class="menu">
-    <button class="btn main" onclick="startGame()">▶ 開始遊戲</button>
-    <button class="btn" onclick="openShop()">🛒 商店與升級</button>
-    <button class="btn" onclick="openMissions()">📅 每日任務<span id="mDot"></span></button>
-    <button class="btn" onclick="openAch()">🏅 成就</button>
-    <button class="btn" onclick="openLB()">🌍 排行榜</button>
-    <button class="btn" onclick="show('howto')">📖 玩法說明</button>
-    <button class="btn" onclick="openSettings()">⚙ 設定與存檔</button>
+  <div class="chips" id="modeChips"></div>
+  <div class="small" id="modeDesc"></div>
+  <div class="small" id="carryInfo" style="margin-top:4px"></div>
+  <div class="menu"><button class="btn main" onclick="startGame()">▶ 開始遊戲</button></div>
+  <div class="nav">
+    <button class="btn" onclick="openShop()">🛒<br>商店</button>
+    <button class="btn" onclick="openHub('daily')">📅<br>任務<span id="mDot"></span></button>
+    <button class="btn" onclick="openLB()">🌍<br>排行榜</button>
+    <button class="btn" onclick="openSettings()">⚙<br>設定</button>
   </div>
 </div>
 
@@ -74,43 +81,42 @@ textarea{width:100%;height:70px;background:#200;color:#fff;border:1px solid #a33
   上排紫色＝<b>車頭</b>，下排橘色＝<b>車尾</b><br>
   電腦：←/→ 車頭，A/D 車尾，空白鍵暫停<br>
   螢幕左半滑動＝車尾，右半滑動＝車頭<br><br>
-  <b>民眾</b><br>
-  輾過得分，頭上 ×數字是倍率，連擊會加成<br>
-  💨 逃跑者：快到時會突然換軌<br>
-  🍔 大胖子：車頭、車尾各輾一次才算（3 倍分）<br>
-  💰 金色民眾：×10，只出現一下就消失<br><br>
+  <b>模式</b><br>
+  🚆 經典：基本玩法<br>
+  🌑 夜班：視野只剩車燈前一小段，分數 ×1.5<br>
+  🔄 鏡像：左右方向相反，分數 ×1.3<br><br>
+  <b>民眾</b> 輾過得分，頭上 ×數字是倍率，連擊會加成<br>
+  💨 逃跑者：快到時換軌　🍔 大胖子：車頭車尾各輾一次（3 倍分）<br>
+  💰 金色民眾：×10，一下就消失<br><br>
   <b>軌道</b><br>
-  🟨 轉轍器：碰到會把那節車輪推到旁邊軌道（箭頭是方向）<br>
-  ⬛ 斷軌（第 2 關起）：掉下去就脫軌，兩節都要閃<br>
+  🟨 轉轍器：把那節車輪推到旁邊軌道<br>
+  ⬛ 斷軌（第 2 關起）：掉下去就脫軌<br>
   ⚡ 加速帶：4 秒加速，分數 ×1.5<br>
-  🌑 隧道：視野變窄，但人變多<br>
+  🌑 隧道：視野變窄但人變多<br>
   ⚠ 迎面列車很長，要整段閃開<br><br>
-  <b>道具</b> 🛡護盾　✨雙倍分數　⏱慢動作<br><br>
-  結算得到地獄幣，可買外觀；每日任務、成就也能拿幣
+  <b>場內道具</b> 🛡護盾　✨雙倍分數　⏱慢動作<br>
+  <b>開局道具</b>（商店購買，每場帶一個）<br>
+  🧲 磁鐵 15 秒自動吸附相鄰軌道的人<br>
+  💨 衝刺 6 秒無敵並加速<br>
+  ❤️ 復活 撞車時復活一次
   </div>
-  <button class="btn" onclick="show('lobby');renderLobby()">← 返回大廳</button>
+  <button class="btn" onclick="openSettings()">← 返回</button>
 </div>
 
 <!-- 商店 -->
 <div class="scr" id="shop">
   <h2>🛒 商店</h2>
   <div id="coinBar" style="font-size:20px;color:#f1c40f"></div>
+  <div id="shopTabs"></div>
   <div id="shopList"></div>
   <button class="btn" onclick="show('lobby');renderLobby()">← 返回大廳</button>
 </div>
 
-<!-- 每日任務 -->
+<!-- 任務中心 -->
 <div class="scr" id="missions">
-  <h2>📅 每日任務</h2>
-  <div class="small">每天自動更新（以手機日期為準）</div>
-  <div id="mList"></div>
-  <button class="btn" onclick="show('lobby');renderLobby()">← 返回大廳</button>
-</div>
-
-<!-- 成就 -->
-<div class="scr" id="achs">
-  <h2>🏅 成就</h2>
-  <div id="aList"></div>
+  <h2>📅 任務中心</h2>
+  <div id="hubTabs"></div>
+  <div id="hubBody"></div>
   <button class="btn" onclick="show('lobby');renderLobby()">← 返回大廳</button>
 </div>
 
@@ -123,11 +129,12 @@ textarea{width:100%;height:70px;background:#200;color:#fff;border:1px solid #a33
 
 <!-- 設定 -->
 <div class="scr" id="settings">
-  <h2>⚙ 設定與存檔</h2>
+  <h2>⚙ 設定</h2>
   <div class="card">
     <div class="item"><span>玩家名稱：<b id="nm"></b></span><button class="btn" onclick="rename()">修改</button></div>
     <div class="item"><span>音效</span><button class="btn" id="tSound" onclick="toggle('sound')"></button></div>
     <div class="item"><span>震動</span><button class="btn" id="tVib" onclick="toggle('vib')"></button></div>
+    <div class="item"><span>怎麼玩</span><button class="btn" onclick="show('howto')">📖 玩法說明</button></div>
   </div>
   <div class="card">
     <b>存檔管理</b><br>
@@ -154,8 +161,6 @@ textarea{width:100%;height:70px;background:#200;color:#fff;border:1px solid #a33
   <div class="card" id="overInfo" style="font-size:16px"></div>
   <div class="menu">
     <button class="btn main" onclick="startGame()">再來一次</button>
-    <button class="btn" onclick="openMissions()">📅 任務</button>
-    <button class="btn" onclick="openShop()">🛒 商店</button>
     <button class="btn" onclick="show('lobby');renderLobby()">回大廳</button>
   </div>
 </div>
@@ -164,11 +169,12 @@ textarea{width:100%;height:70px;background:#200;color:#fff;border:1px solid #a33
 <script>
 const $=id=>document.getElementById(id);
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const COIN='💰';
 
-/* ====== Firebase 全球排行榜設定（沒填就只顯示本機紀錄）====== */
-const FB_URL=''; // 例如 'https://你的專案-default-rtdb.asia-southeast1.firebasedatabase.app'
+/* ====== Firebase 全球排行榜（沒填就只顯示本機紀錄）====== */
+const FB_URL='';
 
-/* ================= 外觀 / 特效資料 ================= */
+/* ================= 資料表 ================= */
 const FXS={
  blood:{c:[0xcc0000,0xff3333],splat:0x8b0000,icon:'💀'},
  fire:{c:[0xff6600,0xffcc00],splat:0x662200,icon:'🔥'},
@@ -178,20 +184,36 @@ const FXS={
  rainbow:{c:null,splat:0x6633aa,icon:'🌈'}};
 const SKINS=[
  {n:'經典紅',f:0x8e44ad,r:0xd35400,b:0xff3b30,lamp:0xffaa00,fx:'blood',cost:0},
- {n:'冥火黑（火焰特效）',f:0x222222,r:0x550000,b:0xff6600,lamp:0xff4400,fx:'fire',cost:300},
- {n:'幽靈藍（幽靈特效）',f:0x4aa3ff,r:0x1abc9c,b:0xecf0f1,lamp:0x66ccff,fx:'ghost',cost:600},
- {n:'黃金列車（金幣特效）',f:0xf1c40f,r:0xe67e22,b:0xffd700,lamp:0xffee00,fx:'gold',cost:1000},
- {n:'毒液綠（毒霧特效）',f:0x1e8449,r:0x145a32,b:0x58d68d,lamp:0x66ff66,fx:'toxic',cost:800},
+ {n:'冥火黑（火焰）',f:0x222222,r:0x550000,b:0xff6600,lamp:0xff4400,fx:'fire',cost:300},
+ {n:'幽靈藍（幽靈）',f:0x4aa3ff,r:0x1abc9c,b:0xecf0f1,lamp:0x66ccff,fx:'ghost',cost:600},
+ {n:'黃金列車（金幣）',f:0xf1c40f,r:0xe67e22,b:0xffd700,lamp:0xffee00,fx:'gold',cost:1000},
+ {n:'毒液綠（毒霧）',f:0x1e8449,r:0x145a32,b:0x58d68d,lamp:0x66ff66,fx:'toxic',cost:800},
  {n:'彩虹（彩虹車燈）',f:0xff66cc,r:0x66ccff,b:0xffffff,lamp:0xffffff,fx:'rainbow',cost:1500}];
+const CONS={
+ magnet:{n:'🧲 磁鐵',d:'開局 15 秒，自動吸附相鄰軌道的人',p:60},
+ dash:{n:'💨 衝刺',d:'開局 6 秒無敵並加速，可撞開障礙',p:80},
+ revive:{n:'❤️ 復活',d:'撞車時原地復活一次',p:120}};
+const MODES={
+ classic:{n:'🚆 經典',d:'基本玩法',m:1},
+ night:{n:'🌑 夜班',d:'視野只剩車燈前一小段　分數 ×1.5',m:1.5},
+ mirror:{n:'🔄 鏡像',d:'左右方向相反　分數 ×1.3',m:1.3}};
+const LOGIN_R=[30,50,70,100,130,170,300];
 
-/* ================= 存檔系統 ================= */
+/* ================= 存檔 ================= */
 const KEY='hellTrain_save_v1';
 const defSave=()=>({v:1,name:'玩家',best:0,coins:0,games:0,kills:0,totalScore:0,maxStage:1,
   skin:0,owned:[0],up:{shield:false,dur:0},sound:true,vib:true,hist:[],
-  missions:{date:'',list:[]},ach:{}});
+  missions:{date:'',list:[],bonus:false},ach:{},mode:'classic',
+  inv:{magnet:0,dash:0,revive:0},carry:'',login:{day:0,streak:0,claimed:false}});
 let S=defSave();
-function mergeSave(o){S=Object.assign(defSave(),o);S.up=Object.assign({shield:false,dur:0},o.up||{});
-  S.missions=o.missions||{date:'',list:[]};S.ach=o.ach||{};}
+function mergeSave(o){
+  S=Object.assign(defSave(),o);
+  S.up=Object.assign({shield:false,dur:0},o.up||{});
+  S.missions=Object.assign({date:'',list:[],bonus:false},o.missions||{});
+  S.ach=o.ach||{};
+  S.inv=Object.assign({magnet:0,dash:0,revive:0},o.inv||{});
+  S.login=Object.assign({day:0,streak:0,claimed:false},o.login||{});
+}
 function loadSave(){
   try{const r=localStorage.getItem(KEY);if(r)mergeSave(JSON.parse(r));
   else S.best=+localStorage.getItem('best')||0;}catch(e){S=defSave();}
@@ -200,6 +222,13 @@ function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
 loadSave();
 document.addEventListener('visibilitychange',save);
 addEventListener('pagehide',save);
+
+/* ================= 日期 / 亂數 ================= */
+function seedRand(str){let h=1779033703^str.length;for(let i=0;i<str.length;i++){h=Math.imul(h^str.charCodeAt(i),3432918353);h=h<<13|h>>>19;}
+  return function(){h=Math.imul(h^h>>>16,2246822507);h=Math.imul(h^h>>>13,3266489909);return((h^=h>>>16)>>>0)/4294967296;}}
+function todayStr(){const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();}
+function dayNum(){return Math.floor((Date.now()-new Date().getTimezoneOffset()*60000)/86400000);}
+const rnd=a=>a[Math.random()*a.length|0];
 
 /* ================= 每日任務 ================= */
 const MPOOL=[
@@ -211,15 +240,19 @@ const MPOOL=[
  {id:'g3',t:'今天玩 3 場',g:3,mode:'sum',key:'games',r:60},
  {id:'st3',t:'一場到達第 3 關',g:3,mode:'best',key:'stage',r:100},
  {id:'k100',t:'今天累計輾過 100 人',g:100,mode:'sum',key:'kills',r:150}];
-function seedRand(str){let h=1779033703^str.length;for(let i=0;i<str.length;i++){h=Math.imul(h^str.charCodeAt(i),3432918353);h=h<<13|h>>>19;}
-  return function(){h=Math.imul(h^h>>>16,2246822507);h=Math.imul(h^h>>>13,3266489909);return((h^=h>>>16)>>>0)/4294967296;}}
-function todayStr(){const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();}
 function ensureMissions(){
   const t=todayStr();
   if(S.missions.date!==t){
     const rr=seedRand(t),pool=MPOOL.slice(),list=[];
     while(list.length<3){const m=pool.splice(Math.floor(rr()*pool.length),1)[0];list.push({id:m.id,prog:0,done:false,claimed:false});}
-    S.missions={date:t,list};save();
+    S.missions={date:t,list,bonus:false};save();
+  }
+}
+function ensureLogin(){
+  const t=dayNum();
+  if(S.login.day!==t){
+    S.login.streak=(S.login.day===t-1)?(S.login.streak>=7?1:S.login.streak+1):1;
+    S.login.day=t;S.login.claimed=false;save();
   }
 }
 function updateMissions(run){
@@ -230,18 +263,37 @@ function updateMissions(run){
     if(m.prog>=d.g){m.prog=d.g;m.done=true;toast('📅 任務完成：'+d.t);}
   }
 }
-function claimable(){ensureMissions();return S.missions.list.filter(m=>m.done&&!m.claimed).length;}
-function openMissions(){show('missions');renderMissions();}
-function renderMissions(){
-  ensureMissions();
-  $('mList').innerHTML=S.missions.list.map((m,i)=>{
-    const d=MPOOL.find(x=>x.id==m.id);
-    const btn=m.claimed?'<button class="btn" disabled>已領取</button>':m.done?`<button class="btn" onclick="claim(${i})">領取 🪙${d.r}</button>`:`<span class="small">🪙${d.r}</span>`;
-    return `<div class="card"><div class="item"><span>${d.t}</span>${btn}</div>
-      <div class="small">${m.prog} / ${d.g}</div><div class="bar"><i style="width:${m.prog/d.g*100}%"></i></div></div>`;}).join('');
+function bonusAvail(){return S.missions.list.length&&S.missions.list.every(m=>m.claimed)&&!S.missions.bonus;}
+function claimable(){
+  ensureMissions();ensureLogin();
+  return S.missions.list.filter(m=>m.done&&!m.claimed).length+(S.login.claimed?0:1)+(bonusAvail()?1:0);
 }
 function claim(i){const m=S.missions.list[i];if(!m.done||m.claimed)return;const d=MPOOL.find(x=>x.id==m.id);
-  m.claimed=true;S.coins+=d.r;save();beep(800,.15,'sine',.12,500);renderMissions();}
+  m.claimed=true;S.coins+=d.r;save();beep(800,.15,'sine',.12,500);renderHub();}
+function swapMission(i){
+  const m=S.missions.list[i];if(m.done)return;
+  if(S.coins<50){toast('地獄幣不足（需要 50）');return;}
+  const used=S.missions.list.map(x=>x.id),pool=MPOOL.filter(x=>!used.includes(x.id));
+  S.coins-=50;S.missions.list[i]={id:rnd(pool).id,prog:0,done:false,claimed:false};save();beep(500,.1,'triangle',.1);renderHub();
+}
+function openChest(){
+  let txt;
+  if(Math.random()<.6){const c=100+Math.floor(Math.random()*151);S.coins+=c;txt=COIN+c+' 幣';}
+  else{const k=rnd(Object.keys(CONS));S.inv[k]+=2;txt=CONS[k].n+' ×2';}
+  unlock('chest');return txt;
+}
+function claimBonus(){
+  if(!bonusAvail())return;
+  S.missions.bonus=true;S.coins+=200;const t=openChest();save();
+  toast('🎁 全部完成！+'+COIN+'200 與寶箱：'+t);beep(900,.3,'triangle',.12,500);renderHub();
+}
+function claimLogin(){
+  ensureLogin();if(S.login.claimed)return;
+  const s=S.login.streak;S.coins+=LOGIN_R[s-1];S.login.claimed=true;
+  let extra='';
+  if(s==7){extra='　🎁寶箱：'+openChest();unlock('streak7');}
+  save();toast('簽到第 '+s+' 天 +'+COIN+LOGIN_R[s-1]+extra);beep(900,.3,'triangle',.12,500);renderHub();
+}
 
 /* ================= 成就 ================= */
 const ACH=[
@@ -254,15 +306,17 @@ const ACH=[
  {id:'boost',n:'極速體驗',d:'踩到加速帶',r:50},
  {id:'switch',n:'被迫轉彎',d:'被轉轍器推開',r:50},
  {id:'fat',n:'重量級',d:'成功輾倒大胖子',r:80},
- {id:'games20',n:'老玩家',d:'累計玩 20 場',r:150}];
+ {id:'games20',n:'老玩家',d:'累計玩 20 場',r:150},
+ {id:'night',n:'夜行者',d:'夜班模式得到 500 分',r:150},
+ {id:'mirror',n:'左右互搏',d:'鏡像模式得到 500 分',r:150},
+ {id:'chest',n:'開箱達人',d:'打開一個寶箱',r:50},
+ {id:'streak7',n:'七日連簽',d:'完成 7 天簽到',r:200}];
 function unlock(id){
   if(S.ach[id])return;const a=ACH.find(x=>x.id==id);if(!a)return;
-  S.ach[id]=1;S.coins+=a.r;save();toast('🏅 成就解鎖：'+a.n+'　+🪙'+a.r);beep(1000,.25,'triangle',.12,500);
+  S.ach[id]=1;S.coins+=a.r;save();toast('🏅 成就解鎖：'+a.n+'　+'+COIN+a.r);beep(1000,.25,'triangle',.12,500);
 }
-function openAch(){show('achs');
-  $('aList').innerHTML=ACH.map(a=>`<div class="card"><div class="item"><span>${S.ach[a.id]?'✅':'🔒'} <b>${a.n}</b><br><span class="small">${a.d}</span></span><span class="small">🪙${a.r}</span></div></div>`).join('');}
 let toastT=null;
-function toast(t){const e=$('toast');e.textContent=t;e.style.opacity=1;clearTimeout(toastT);toastT=setTimeout(()=>e.style.opacity=0,2600);}
+function toast(t){const e=$('toast');e.textContent=t;e.style.opacity=1;clearTimeout(toastT);toastT=setTimeout(()=>e.style.opacity=0,2800);}
 
 /* ================= 3D 場景 ================= */
 const scene=new THREE.Scene();
@@ -275,7 +329,7 @@ renderer.setSize(innerWidth,innerHeight);
 document.body.insertBefore(renderer.domElement,document.body.firstChild);
 function fit(){renderer.setSize(innerWidth,innerHeight);camera.aspect=innerWidth/innerHeight;camera.fov=camera.aspect<.8?75:60;camera.updateProjectionMatrix();}
 addEventListener('resize',fit);fit();
-scene.add(new THREE.AmbientLight(0xff9977,.7));
+const amb=new THREE.AmbientLight(0xff9977,.7);scene.add(amb);
 const dl=new THREE.DirectionalLight(0xffccaa,.8);dl.position.set(3,10,5);scene.add(dl);
 
 const LX=[-3.2,0,3.2],ZF=-4,ZR=2;
@@ -293,7 +347,6 @@ for(let l=0;l<3;l++){
 const fires=[];
 for(let i=0;i<14;i++){const f=new THREE.Mesh(new THREE.ConeGeometry(.6,2.5,6),basic(i%2?0xff6600:0xff2200));
   f.position.x=(i%2?1:-1)*(7+Math.random()*3);f.position.y=1.2;scene.add(f);fires.push(f);}
-// 隧道拱門
 const arches=[];
 for(let i=0;i<8;i++){
   const g=new THREE.Group();
@@ -301,7 +354,6 @@ for(let i=0;i<8;i++){
   const top=box(11.6,.8,.8,0x3a3a3a);top.position.y=3.6;g.add(top);
   g.visible=false;scene.add(g);arches.push(g);
 }
-
 function label(txt,color,size=1){
   const c=document.createElement('canvas');c.width=256;c.height=128;const x=c.getContext('2d');
   x.font='bold 70px sans-serif';x.textAlign='center';x.textBaseline='middle';
@@ -309,7 +361,6 @@ function label(txt,color,size=1){
   const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),transparent:true,depthTest:false}));
   sp.scale.set(3*size,1.5*size,1);return sp;
 }
-
 let AC=null;
 function beep(f,d,type='square',vol=.12,slide=0){
   if(!S.sound)return;
@@ -329,19 +380,24 @@ function bogie(c){const g=new THREE.Group();
   scene.add(g);return g;}
 const bF=bogie(0x8e44ad),bR=bogie(0xd35400);
 const lamp=new THREE.Mesh(new THREE.SphereGeometry(.25),basic(0xffaa00));lamp.position.set(0,.9,-.95);bF.add(lamp);
-const lampLight=new THREE.PointLight(0xffaa00,1.2,16);lampLight.position.set(0,1,-2);bF.add(lampLight);
+const lampLight=new THREE.PointLight(0xffaa00,1.2,16);lampLight.position.set(0,1.5,-2);bF.add(lampLight);
 const shieldMesh=new THREE.Mesh(new THREE.SphereGeometry(1.6,16,12),basic(0x4aa3ff,{transparent:true,opacity:.3}));
 shieldMesh.visible=false;scene.add(shieldMesh);
 function applySkin(){const k=SKINS[S.skin]||SKINS[0];
   bF.children[0].material.color.set(k.f);bR.children[0].material.color.set(k.r);body.material.color.set(k.b);
   lamp.material.color.set(k.lamp);lampLight.color.set(k.lamp);}
 applySkin();
+function applyLook(m){
+  const n=m=='night';
+  amb.intensity=n?.22:.7;dl.intensity=n?.2:.8;
+  lampLight.intensity=n?3:1.2;lampLight.distance=n?32:16;
+  scene.background.set(n?0x030000:0x1a0000);scene.fog.color.set(n?0x030000:0x2a0500);
+}
 
 const TYPES=[{m:1,w:50,c:'#bdc3c7'},{m:2,w:30,c:'#2ecc71'},{m:3,w:14,c:'#3498db'},{m:5,w:6,c:'#f1c40f'}];
 const SKIN=[0xffdbac,0xf1c27d,0xe0ac69,0xc68642,0x8d5524];
 const HAIR=[0x222222,0x5a3825,0xd4a017,0xc0392b,0x8e44ad,0xbdc3c7,0x16a085];
 const SHIRT=[0xe74c3c,0x3498db,0x2ecc71,0xf39c12,0x9b59b6,0x1abc9c,0xecf0f1,0xfd79a8];
-const rnd=a=>a[Math.random()*a.length|0];
 function pickType(){let t=Math.random()*100;for(const ty of TYPES){if((t-=ty.w)<0)return ty;}return TYPES[0];}
 
 function makePerson(){
@@ -409,13 +465,22 @@ function makePower(){
 /* ================= 遊戲狀態 ================= */
 let st='lobby',score=0,speed=22,dist=0,items=[],nextZ=-40,combo=0,kills=0,shake=0,flash=0,stage=1;
 let shield=false,dbl=0,slow=0,boost=0,tunnel=0,tunnelCd=25,paused=false;
+let magnet=0,dash=0,reviveOn=false,curMode='classic';
 let run={},usedShield=false;
 let rear={l:1,x:0},front={l:1,x:0},parts=[],splats=[],pops=[],last=performance.now();
 function clearAll(){for(const a of[items,parts,splats,pops])for(const o of a)scene.remove(o.m||o);items=[];parts=[];splats=[];pops=[];}
 function reset(){clearAll();score=0;speed=22;dist=0;nextZ=-40;combo=0;kills=0;stage=1;
+  curMode=S.mode;applyLook(curMode);
   shield=!!S.up.shield;usedShield=shield;dbl=0;slow=0;boost=0;tunnel=0;tunnelCd=25;paused=false;
+  magnet=0;dash=0;reviveOn=false;
+  if(S.carry&&S.inv[S.carry]>0){
+    S.inv[S.carry]--;
+    if(S.carry=='magnet')magnet=15;if(S.carry=='dash')dash=6;if(S.carry=='revive')reviveOn=true;
+    save();
+  }
   run={kills:0,score:0,combo:0,powers:0,specials:0,stage:1,games:1};
-  rear={l:1,x:0};front={l:1,x:0};scene.background.set(0x1a0000);scene.fog.color.set(0x2a0500);}
+  rear={l:1,x:0};front={l:1,x:0};
+}
 function spawnRow(){
   let obs=[];
   if(Math.random()<.5){const n=Math.random()<.25?2:1;while(obs.length<n){const l=Math.random()*3|0;if(!obs.includes(l))obs.push(l);}}
@@ -430,7 +495,11 @@ function spawnRow(){
   }
   nextZ-=Math.max(13,22-speed*.2)+Math.random()*5;
 }
-function move(b,d){if(st!='play'||paused)return;const o=b.l;b.l=Math.max(0,Math.min(2,b.l+d));if(o!=b.l)beep(300,.05,'sine',.05);}
+function move(b,d){
+  if(st!='play'||paused)return;
+  if(curMode=='mirror')d=-d;
+  const o=b.l;b.l=Math.max(0,Math.min(2,b.l+d));if(o!=b.l)beep(300,.05,'sine',.05);
+}
 const acts={rl:()=>move(rear,-1),rr:()=>move(rear,1),fl:()=>move(front,-1),fr:()=>move(front,1)};
 for(const id in acts){const e=$(id);
   e.addEventListener('touchstart',ev=>{ev.preventDefault();acts[id]();},{passive:false});
@@ -449,15 +518,20 @@ function show(id){
   $('ui').style.display=playing?'flex':'none';
   $('pause').style.display=playing?'block':'none';
 }
+function setMode(m){S.mode=m;save();renderLobby();}
 function renderLobby(){
-  st='lobby';
-  $('lobbyInfo').innerHTML=`👤 <b>${esc(S.name)}</b>　🪙 <b style="color:#f1c40f">${S.coins}</b><br>
-   🏆 最高分 ${S.best}　🎮 場數 ${S.games}<br>累計輾過 ${S.kills}　最高關卡 ${S.maxStage}<br>
-   目前列車：${SKINS[S.skin].n}`;
-  const c=claimable();$('mDot').innerHTML=c?`<span class="dot">${c}</span>`:'';
+  st='lobby';applyLook('classic');
+  $('lobbyInfo').innerHTML=`👤 <b>${esc(S.name)}</b>　${COIN} <b style="color:#f1c40f">${S.coins}</b>　🏆 ${S.best}<br>
+   <span class="small">場數 ${S.games}　累計輾過 ${S.kills}　列車：${SKINS[S.skin].n}</span>`;
+  $('modeChips').innerHTML=Object.keys(MODES).map(k=>`<button class="chip ${S.mode==k?'on':''}" onclick="setMode('${k}')">${MODES[k].n}</button>`).join('');
+  $('modeDesc').textContent=MODES[S.mode].d;
+  const c=S.carry;
+  $('carryInfo').textContent=c&&S.inv[c]>0?'攜帶：'+CONS[c].n+' ×'+S.inv[c]:'未攜帶開局道具（到商店購買）';
+  const n=claimable();$('mDot').innerHTML=n?`<span class="dot">${n}</span>`:'';
 }
 function startGame(){
   reset();applySkin();st='play';show(null);$('pause').textContent='⏸';last=performance.now();beep(200,.2,'sawtooth',.1,300);
+  if(curMode!='classic')banner(MODES[curMode].n+' 模式');
 }
 function togglePause(){
   if(st!='play')return;
@@ -467,47 +541,100 @@ function togglePause(){
 function quitToLobby(){paused=false;st='lobby';clearAll();show('lobby');renderLobby();}
 
 /* ================= 商店 ================= */
+let shopTab='skin',hubTab='daily';
+function tabsHtml(list,cur,fn){return '<div class="tabs">'+list.map(([k,n])=>`<button class="chip ${k==cur?'on':''}" onclick="${fn}('${k}')">${n}</button>`).join('')+'</div>';}
+function dailyIdx(){return 1+Math.floor(seedRand(todayStr())()*(SKINS.length-1));}
+function priceOf(i){return i==dailyIdx()?Math.floor(SKINS[i].cost/2):SKINS[i].cost;}
 function openShop(){show('shop');renderShop();}
+function setShopTab(t){shopTab=t;renderShop();}
 function renderShop(){
-  $('coinBar').textContent='🪙 '+S.coins;
-  let h='<div class="card"><b>🚆 列車外觀（含車燈與輾過特效）</b>';
-  SKINS.forEach((k,i)=>{
-    const own=S.owned.includes(i),sel=S.skin==i;
-    const sw=c=>`<span class="sw" style="background:#${c.toString(16).padStart(6,'0')}"></span>`;
-    h+=`<div class="item"><span>${sw(k.f)}${sw(k.b)}${sw(k.r)} ${k.n} ${FXS[k.fx].icon}</span>`+
-      (sel?'<button class="btn" disabled>使用中</button>':own?`<button class="btn" onclick="useSkin(${i})">使用</button>`:`<button class="btn" onclick="buySkin(${i})" ${S.coins<k.cost?'disabled':''}>🪙${k.cost}</button>`)+'</div>';
-  });
-  h+='</div><div class="card"><b>⚡ 升級</b>';
-  h+=`<div class="item"><span>開局護盾（每場自動帶 🛡）</span>`+(S.up.shield?'<button class="btn" disabled>已擁有</button>':`<button class="btn" onclick="buyShield()" ${S.coins<250?'disabled':''}>🪙250</button>`)+'</div>';
-  const lv=S.up.dur,cost=[150,300,500][lv];
-  h+=`<div class="item"><span>道具持續時間 Lv${lv}/3</span>`+(lv>=3?'<button class="btn" disabled>已滿級</button>':`<button class="btn" onclick="buyDur()" ${S.coins<cost?'disabled':''}>🪙${cost}</button>`)+'</div></div>';
+  $('coinBar').textContent=COIN+' '+S.coins;
+  $('shopTabs').innerHTML=tabsHtml([['skin','🚆 外觀'],['item','🎒 開局道具'],['up','⚡ 升級']],shopTab,'setShopTab');
+  let h='';
+  if(shopTab=='skin'){
+    const di=dailyIdx();
+    h+='<div class="card">';
+    SKINS.forEach((k,i)=>{
+      const own=S.owned.includes(i),sel=S.skin==i,p=priceOf(i);
+      const sw=c=>`<span class="sw" style="background:#${c.toString(16).padStart(6,'0')}"></span>`;
+      h+=`<div class="item"><span>${sw(k.f)}${sw(k.b)}${sw(k.r)} ${k.n} ${FXS[k.fx].icon}${i==di&&!own?' <span class="tag">今日半價</span>':''}</span>`+
+        (sel?'<button class="btn" disabled>使用中</button>':own?`<button class="btn" onclick="useSkin(${i})">使用</button>`:`<button class="btn" onclick="buySkin(${i})" ${S.coins<p?'disabled':''}>${COIN}${p}</button>`)+'</div>';
+    });
+    h+='</div><div class="small">限定折扣每天輪換一款</div>';
+  }else if(shopTab=='item'){
+    h+='<div class="card small">每場只能帶一個，開局自動使用並消耗 1 個</div>';
+    for(const k in CONS){
+      const c=CONS[k];
+      h+=`<div class="card"><div class="item"><span><b>${c.n}</b>　擁有 ${S.inv[k]}<br><span class="small">${c.d}</span></span>
+       <button class="btn" onclick="buyCons('${k}')" ${S.coins<c.p?'disabled':''}>${COIN}${c.p}</button></div>
+       <div class="item"><span></span><button class="btn" onclick="setCarry('${k}')" ${S.inv[k]<1?'disabled':''}>${S.carry==k?'✔ 攜帶中（點擊取消）':'設為攜帶'}</button></div></div>`;
+    }
+  }else{
+    h+='<div class="card">';
+    h+=`<div class="item"><span>開局護盾（每場自動帶 🛡）</span>`+(S.up.shield?'<button class="btn" disabled>已擁有</button>':`<button class="btn" onclick="buyShield()" ${S.coins<250?'disabled':''}>${COIN}250</button>`)+'</div>';
+    const lv=S.up.dur,cost=[150,300,500][lv];
+    h+=`<div class="item"><span>道具持續時間 Lv${lv}/3</span>`+(lv>=3?'<button class="btn" disabled>已滿級</button>':`<button class="btn" onclick="buyDur()" ${S.coins<cost?'disabled':''}>${COIN}${cost}</button>`)+'</div></div>';
+  }
   $('shopList').innerHTML=h;
 }
 function useSkin(i){S.skin=i;applySkin();save();renderShop();}
-function buySkin(i){const k=SKINS[i];if(S.coins>=k.cost){S.coins-=k.cost;S.owned.push(i);S.skin=i;applySkin();save();renderShop();beep(800,.15,'sine',.12,500);}}
+function buySkin(i){const p=priceOf(i);if(S.coins>=p){S.coins-=p;S.owned.push(i);S.skin=i;applySkin();save();renderShop();beep(800,.15,'sine',.12,500);}}
 function buyShield(){if(S.coins>=250&&!S.up.shield){S.coins-=250;S.up.shield=true;save();renderShop();beep(800,.15,'sine',.12,500);}}
 function buyDur(){const c=[150,300,500][S.up.dur];if(S.up.dur<3&&S.coins>=c){S.coins-=c;S.up.dur++;save();renderShop();beep(800,.15,'sine',.12,500);}}
+function buyCons(k){const c=CONS[k];if(S.coins>=c.p){S.coins-=c.p;S.inv[k]++;if(!S.carry)S.carry=k;save();renderShop();beep(800,.15,'sine',.12,500);}}
+function setCarry(k){S.carry=S.carry==k?'':k;save();renderShop();}
+
+/* ================= 任務中心 ================= */
+function openHub(t){hubTab=t||'daily';show('missions');renderHub();}
+function setHubTab(t){hubTab=t;renderHub();}
+function renderHub(){
+  ensureMissions();ensureLogin();
+  const dailyDot=S.missions.list.some(m=>m.done&&!m.claimed)||bonusAvail()?' •':'';
+  const loginDot=S.login.claimed?'':' •';
+  $('hubTabs').innerHTML=tabsHtml([['daily','每日任務'+dailyDot],['login','簽到'+loginDot],['ach','成就']],hubTab,'setHubTab');
+  let h='';
+  if(hubTab=='daily'){
+    h+=S.missions.list.map((m,i)=>{
+      const d=MPOOL.find(x=>x.id==m.id);
+      const btn=m.claimed?'<button class="btn" disabled>已領取</button>':m.done?`<button class="btn" onclick="claim(${i})">領取 ${COIN}${d.r}</button>`
+        :`<span class="small">${COIN}${d.r}</span> <button class="btn" onclick="swapMission(${i})" ${S.coins<50?'disabled':''}>換 ${COIN}50</button>`;
+      return `<div class="card"><div class="item"><span>${d.t}</span><span>${btn}</span></div>
+        <div class="small">${m.prog} / ${d.g}</div><div class="bar"><i style="width:${m.prog/d.g*100}%"></i></div></div>`;}).join('');
+    const done=S.missions.list.filter(m=>m.claimed).length;
+    h+=`<div class="card"><div class="item"><span>🎁 全部完成大獎（${done}/3）<br><span class="small">${COIN}200 + 一個寶箱</span></span>`+
+      (S.missions.bonus?'<button class="btn" disabled>已領取</button>':`<button class="btn" onclick="claimBonus()" ${bonusAvail()?'':'disabled'}>領取</button>`)+'</div></div>';
+    h+='<div class="small">每天自動更新，未完成的任務可花 50 幣更換</div>';
+  }else if(hubTab=='login'){
+    const s=S.login.streak;
+    h+='<div class="card"><b>連續簽到</b><div class="days">'+LOGIN_R.map((r,i)=>`<div class="${i<s-(S.login.claimed?0:1)?'on':''} ${i==s-1&&!S.login.claimed?'now':''}">第${i+1}天<br>${i==6?'🎁':COIN}${r}</div>`).join('')+'</div>'+
+      `<div class="item"><span>今天是第 ${s} 天<br><span class="small">第 7 天有大獎和寶箱</span></span>`+
+      (S.login.claimed?'<button class="btn" disabled>今日已簽到</button>':`<button class="btn" onclick="claimLogin()">簽到 ${COIN}${LOGIN_R[s-1]}</button>`)+'</div></div>';
+  }else{
+    h+=ACH.map(a=>`<div class="card"><div class="item"><span>${S.ach[a.id]?'✅':'🔒'} <b>${a.n}</b><br><span class="small">${a.d}（解鎖自動入帳）</span></span><span class="small">+${a.r}</span></div></div>`).join('');
+  }
+  $('hubBody').innerHTML=h;
+}
 
 /* ================= 排行榜 ================= */
 async function submitScore(){
   if(!FB_URL||score<=0)return;
-  try{await fetch(FB_URL+'/scores.json',{method:'POST',body:JSON.stringify({name:S.name.slice(0,10),score:score,t:Date.now()})});}catch(e){}
+  try{await fetch(FB_URL+'/scores.json',{method:'POST',body:JSON.stringify({name:S.name.slice(0,10),score:score,mode:curMode,t:Date.now()})});}catch(e){}
 }
 async function openLB(){
-  show('lb');const box=$('lbBody');
+  show('lb');const bx=$('lbBody');
   const local=[...S.hist].sort((a,b)=>b.s-a.s).slice(0,5);
   const localHtml='<b>本機最佳</b><br>'+(local.length?local.map((x,i)=>`${i+1}. ${x.s} 分　<span class="small">${x.d}</span>`).join('<br>'):'還沒有紀錄');
-  if(!FB_URL){box.innerHTML='<div class="small">尚未設定 Firebase，只顯示本機紀錄。<br>在程式最上方的 FB_URL 填入你的 Realtime Database 網址就能啟用全球排行榜。</div><br>'+localHtml;return;}
-  box.innerHTML='載入中…';
+  if(!FB_URL){bx.innerHTML='<div class="small">尚未設定 Firebase，只顯示本機紀錄。<br>在程式最上方的 FB_URL 填入你的 Realtime Database 網址就能啟用全球排行榜。</div><br>'+localHtml;return;}
+  bx.innerHTML='載入中…';
   try{
     const r=await fetch(FB_URL+'/scores.json?orderBy=%22score%22&limitToLast=20');
     const o=await r.json();
     const arr=Object.values(o||{}).sort((a,b)=>b.score-a.score).slice(0,10);
-    box.innerHTML='<b>🌍 全球前 10 名</b><br>'+(arr.length?arr.map((x,i)=>`${['🥇','🥈','🥉'][i]||(i+1)+'.'} ${esc(x.name)}　<b>${x.score}</b>`).join('<br>'):'還沒有人上榜')+'<br><br>'+localHtml;
-  }catch(e){box.innerHTML='無法連線到排行榜<br><br>'+localHtml;}
+    bx.innerHTML='<b>🌍 全球前 10 名</b><br>'+(arr.length?arr.map((x,i)=>`${['🥇','🥈','🥉'][i]||(i+1)+'.'} ${esc(x.name)}　<b>${x.score}</b> <span class="small">${(MODES[x.mode]||MODES.classic).n}</span>`).join('<br>'):'還沒有人上榜')+'<br><br>'+localHtml;
+  }catch(e){bx.innerHTML='無法連線到排行榜<br><br>'+localHtml;}
 }
 
-/* ================= 設定 / 存檔管理 ================= */
+/* ================= 設定 / 存檔 ================= */
 function openSettings(){show('settings');renderSettings();}
 function renderSettings(){$('nm').textContent=S.name;$('tSound').textContent=S.sound?'開':'關';$('tVib').textContent=S.vib?'開':'關';}
 function toggle(k){S[k]=!S[k];save();renderSettings();}
@@ -524,13 +651,13 @@ function wipe(){if(confirm('確定要清除全部存檔嗎？無法復原！')){
 /* ================= 特效 ================= */
 function burstColor(i){const fx=FXS[SKINS[S.skin].fx];
   if(!fx.c)return new THREE.Color().setHSL(Math.random(),1,.55).getHex();return fx.c[i%2];}
-function burst(x,z){
+function burst(x,z,gray){
   const fx=FXS[SKINS[S.skin].fx];
   for(let i=0;i<30;i++){
-    const m=box(.15,.15,.15,burstColor(i));m.position.set(x,.5,z);scene.add(m);
+    const m=box(.15,.15,.15,gray?0x999999:burstColor(i));m.position.set(x,.5,z);scene.add(m);
     parts.push({m,v:new THREE.Vector3((Math.random()-.5)*8,Math.random()*7,(Math.random()-.5)*8),t:0});
   }
-  const sk=label(fx.icon,'#fff',.8);sk.position.set(x,2,z);scene.add(sk);parts.push({m:sk,v:new THREE.Vector3(0,3,0),t:0,s:true});
+  if(!gray){const sk=label(fx.icon,'#fff',.8);sk.position.set(x,2,z);scene.add(sk);parts.push({m:sk,v:new THREE.Vector3(0,3,0),t:0,s:true});}
 }
 function pop(x,z,txt,c){const s=label(txt,c,1.2);s.position.set(x,3,z);scene.add(s);pops.push({m:s,t:0});}
 function splat(x,z){
@@ -544,7 +671,8 @@ const STAGECOL=[[0x1a0000,0x2a0500],[0x100020,0x1a0030],[0x001a1a,0x002a2a],[0x2
 function banner(t){const s=$('stage');s.textContent=t;s.style.opacity=1;setTimeout(()=>s.style.opacity=0,1400);}
 function showStage(){
   banner('第 '+stage+' 關');
-  const c=STAGECOL[(stage-1)%STAGECOL.length];scene.background.set(c[0]);scene.fog.color.set(c[1]);beep(500,.3,'triangle',.1,400);
+  if(curMode!='night'){const c=STAGECOL[(stage-1)%STAGECOL.length];scene.background.set(c[0]);scene.fog.color.set(c[1]);}
+  beep(500,.3,'triangle',.1,400);
 }
 
 /* ================= 結算 ================= */
@@ -560,9 +688,11 @@ function gameOver(){
   updateMissions(run);
   if(S.kills>=500)unlock('kills500');
   if(S.games>=20)unlock('games20');
+  if(curMode=='night'&&score>=500)unlock('night');
+  if(curMode=='mirror'&&score>=500)unlock('mirror');
   save();submitScore();
-  $('overInfo').innerHTML=`得分：<b style="font-size:26px">${score}</b> ${newBest?'<span style="color:#f1c40f">🎉 新紀錄！</span>':''}<br>
-   輾過：${kills} 人　最高連擊 ${run.combo}<br>到達第 ${stage} 關　特殊民眾 ${run.specials}<br>🪙 獲得地獄幣 +${earn}（共 ${S.coins}）<br>最高分：${S.best}`;
+  $('overInfo').innerHTML=`${MODES[curMode].n}<br>得分：<b style="font-size:26px">${score}</b> ${newBest?'<span style="color:#f1c40f">🎉 新紀錄！</span>':''}<br>
+   輾過：${kills} 人　最高連擊 ${run.combo}<br>到達第 ${stage} 關　特殊民眾 ${run.specials}<br>${COIN} 獲得地獄幣 +${earn}（共 ${S.coins}）<br>最高分：${S.best}`;
   setTimeout(()=>{if(st=='over')show('over');},700);
 }
 
@@ -570,7 +700,12 @@ function gameOver(){
 function hitBogie(b,z,it){
   const u=it.userData;
   if(u.k=='o'){
+    if(dash>0){u.dead=true;scene.remove(it);burst(LX[u.lane],z,true);shake=.2;beep(200,.15,'square',.12);pop(LX[u.lane],z,'撞開！','#fff');return;}
     if(shield){shield=false;u.dead=true;scene.remove(it);shake=.3;flash=.4;beep(180,.3,'sawtooth',.15,-60);vib(80);pop(LX[u.lane],z,'護盾破裂','#4aa3ff');return;}
+    if(reviveOn){
+      reviveOn=false;dash=Math.max(dash,2.5);
+      for(const o of items){if(o.userData.k=='o'&&o.position.z>-30){o.userData.dead=true;scene.remove(o);}}
+      flash=.5;shake=.3;beep(700,.4,'triangle',.15,500);vib(100);pop(LX[u.lane],z,'❤️ 復活！','#ff6b81');return;}
     gameOver();return;}
   if(u.k=='u'){
     u.dead=true;scene.remove(it);beep(800,.15,'sine',.12,500);run.powers++;
@@ -582,7 +717,6 @@ function hitBogie(b,z,it){
     shake=.2;beep(250,.2,'sawtooth',.12,150);vib(60);pop(LX[u.lane],z,'轉轍器！','#ff8800');unlock('switch');return;}
   if(u.k=='b'){
     u.dead=true;scene.remove(it);boost=4;beep(600,.3,'triangle',.12,600);pop(LX[u.lane],z,'加速 ×1.5','#2ecc71');unlock('boost');return;}
-  // 民眾
   if(u.sp=='fat'){
     if(!u.hits)u.hits=new Set();
     if(u.hits.has(b))return;
@@ -592,7 +726,7 @@ function hitBogie(b,z,it){
   u.dead=true;scene.remove(it);combo=Math.min(combo+1,10);kills++;shake=.15;flash=.3;
   run.combo=Math.max(run.combo,combo);if(u.sp){run.specials++;}
   let base=u.ty.m*10;if(u.sp=='fat')base*=3;
-  const mult=(dbl>0?2:1)*(boost>0?1.5:1);
+  const mult=(dbl>0?2:1)*(boost>0?1.5:1)*MODES[curMode].m;
   const pts=Math.round(base*(1+Math.floor(combo/3)*.5)*mult);score+=pts;
   pop(LX[u.lane],z,'+'+pts,u.ty.c);burst(LX[u.lane],z);splat(LX[u.lane],z);
   beep(90,.15,'square',.15,-40);vib(30);
@@ -605,9 +739,9 @@ function hitBogie(b,z,it){
 function update(rdt){
   const dt=rdt*(slow>0?.6:1);
   speed=Math.min(55,speed+dt*.6);
-  const sp=speed*(boost>0?1.35:1);
+  const sp=speed*(boost>0?1.35:1)*(dash>0?1.3:1);
   dist+=sp*dt;
-  if(dbl>0)dbl-=rdt;if(slow>0)slow-=rdt;if(boost>0)boost-=rdt;
+  if(dbl>0)dbl-=rdt;if(slow>0)slow-=rdt;if(boost>0)boost-=rdt;if(magnet>0)magnet-=rdt;if(dash>0)dash-=rdt;
   if(tunnel>0){tunnel-=rdt;if(tunnel<=0){banner('出隧道了');unlock('tunnel');}}
   else{tunnelCd-=rdt;if(tunnelCd<=0){tunnel=8;tunnelCd=30+Math.random()*15;banner('🌑 進入隧道');}}
   for(const b of[rear,front])b.x+=(LX[b.l]-b.x)*Math.min(1,rdt*18);
@@ -619,6 +753,10 @@ function update(rdt){
     if(u.sp=='runner'&&!u.moved&&it.position.z>-36){
       u.moved=true;let nl=u.lane+(Math.random()<.5?-1:1);if(nl<0||nl>2)nl=u.lane==0?1:u.lane-1;
       u.lane=nl;u.tx=LX[nl];beep(700,.1,'sine',.08);
+    }
+    if(magnet>0&&u.k=='p'&&!u.mag&&it.position.z>-28&&it.position.z<-6){
+      const cand=[front.l,rear.l].filter(l=>Math.abs(l-u.lane)<=1);
+      if(cand.length){u.lane=cand[0];u.tx=LX[cand[0]];u.mag=true;}
     }
     if(u.tx!==undefined)it.position.x+=(u.tx-it.position.x)*Math.min(1,rdt*6);
     if(u.sp=='gold'){
@@ -640,9 +778,10 @@ function update(rdt){
   parts=parts.filter(p=>{if(p.t>(p.s?1:.9)){scene.remove(p.m);return false}return true});
   for(const p of pops){p.t+=rdt;p.m.position.y+=2*rdt;p.m.material.opacity=Math.max(0,1-p.t);}
   pops=pops.filter(p=>{if(p.t>1){scene.remove(p.m);return false}return true});
-  $('sc').textContent='得分 '+score;$('sub').textContent='最高 '+Math.max(S.best,score)+'　輾過 '+kills+'　第'+stage+'關';
+  $('sc').textContent='得分 '+score;
+  $('sub').textContent=MODES[curMode].n+'　最高 '+Math.max(S.best,score)+'　輾過 '+kills+'　第'+stage+'關';
   $('cb').textContent=combo>1?'連擊 '+combo:'';
-  $('stat').textContent=(shield?'🛡 ':'')+(dbl>0?'✨'+Math.ceil(dbl)+'s ':'')+(slow>0?'⏱'+Math.ceil(slow)+'s ':'')+(boost>0?'⚡'+Math.ceil(boost)+'s ':'')+(tunnel>0?'🌑':'');
+  $('stat').textContent=(shield?'🛡 ':'')+(reviveOn?'❤️ ':'')+(dbl>0?'✨'+Math.ceil(dbl)+'s ':'')+(slow>0?'⏱'+Math.ceil(slow)+'s ':'')+(boost>0?'⚡'+Math.ceil(boost)+'s ':'')+(magnet>0?'🧲'+Math.ceil(magnet)+'s ':'')+(dash>0?'💨'+Math.ceil(dash)+'s ':'')+(tunnel>0?'🌑':'');
 }
 function render(){
   if(st=='lobby'){dist+=6*(1/60);front.x=rear.x=0;}
@@ -650,14 +789,15 @@ function render(){
   const a=new THREE.Vector3(front.x,1.5,ZF),b=new THREE.Vector3(rear.x,1.5,ZR);
   body.position.copy(a).add(b).multiplyScalar(.5);
   body.scale.z=a.distanceTo(b);body.lookAt(a);
-  shieldMesh.visible=shield&&st!='lobby';shieldMesh.position.copy(body.position);shieldMesh.scale.set(1,1,1+body.scale.z*.5);shieldMesh.lookAt(a);
+  shieldMesh.visible=(shield||dash>0)&&st=='play';shieldMesh.position.copy(body.position);shieldMesh.scale.set(1,1,1+body.scale.z*.5);shieldMesh.lookAt(a);
+  shieldMesh.material.color.set(dash>0?0xffee55:0x4aa3ff);
   if(SKINS[S.skin].fx=='rainbow'){const c=new THREE.Color().setHSL((performance.now()/1000)%1,1,.6);lamp.material.color.copy(c);lampLight.color.copy(c);}
   const off=dist%3;let i=0;
   for(let l=0;l<3;l++)for(let k=0;k<50;k++)sleepers[i++].position.set(LX[l],.05,-k*3+10+off);
   fires.forEach((f,i)=>{f.position.z=((-i*10+dist)%140)-120;f.scale.y=1+Math.sin(performance.now()/100+i)*.2;});
-  const inT=st=='play'&&tunnel>0;
+  const inT=st=='play'&&tunnel>0,night=st=='play'&&curMode=='night';
   arches.forEach((g,i)=>{const z=((i*14+dist)%112)-104;g.position.z=z;g.visible=inT&&z<-8;});
-  const tn=inT?6:30,tf=inT?42:110;
+  const tn=inT?(night?2:6):(night?4:30),tf=inT?(night?20:42):(night?34:110);
   scene.fog.near+=(tn-scene.fog.near)*.05;scene.fog.far+=(tf-scene.fog.far)*.05;
   const sh=shake>0?(Math.random()-.5)*.5:0;
   camera.position.set((front.x+rear.x)*.12+sh,(camera.aspect<.8?9.5:8)+sh,camera.aspect<.8?11:9);
@@ -672,7 +812,7 @@ function loop(t){
   render();requestAnimationFrame(loop);
 }
 $('pause').addEventListener('click',togglePause);
-ensureMissions();
+ensureMissions();ensureLogin();
 show('lobby');renderLobby();
 requestAnimationFrame(loop);
 </script>
