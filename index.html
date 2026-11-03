@@ -7,20 +7,29 @@
 <style>
 html,body{margin:0;height:100%;background:#000;overflow:hidden;touch-action:none;user-select:none;font-family:sans-serif}
 canvas{display:block}
-#hud{position:fixed;left:14px;top:10px;color:#fff;font-weight:bold;text-shadow:0 0 6px #000;pointer-events:none}
+#hud{position:fixed;left:14px;top:10px;color:#fff;font-weight:bold;text-shadow:0 0 6px #000;pointer-events:none;display:none}
 #stat{color:#7fdbff;font-size:15px}
 #flash{position:fixed;inset:0;background:#f00;opacity:0;pointer-events:none}
 #stage{position:fixed;left:0;right:0;top:30%;text-align:center;color:#ff3b30;font-size:34px;font-weight:bold;text-shadow:0 0 10px #000;opacity:0;pointer-events:none;transition:opacity .4s}
-#pause{position:fixed;right:12px;top:10px;width:46px;height:46px;border-radius:12px;border:0;background:rgba(255,255,255,.2);color:#fff;font-size:20px}
-#ui{position:fixed;left:50%;transform:translateX(-50%);bottom:max(14px,env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:8px;width:min(92vw,360px)}
+#pause{position:fixed;right:12px;top:10px;width:46px;height:46px;border-radius:12px;border:0;background:rgba(255,255,255,.2);color:#fff;font-size:20px;display:none}
+#ui{position:fixed;left:50%;transform:translateX(-50%);bottom:max(14px,env(safe-area-inset-bottom));display:none;flex-direction:column;gap:8px;width:min(92vw,360px)}
 .row{display:flex;gap:8px;align-items:center}
 .row b{color:#fff;font-size:14px;width:44px;text-align:center;text-shadow:0 0 4px #000}
 .row button{flex:1;height:58px;border-radius:14px;border:0;font-size:28px;color:#fff;opacity:.85}
 .f button{background:#8e44ad}.r button{background:#d35400}
-button:active{opacity:1;filter:brightness(1.3)}
-#msg{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;background:rgba(20,0,0,.88);text-align:center;padding:20px}
-#msg h1{color:#ff3b30;font-size:42px;text-shadow:0 0 12px #f00}
-#msg .big{padding:14px 30px;font-size:22px;background:#c0392b;margin-top:16px;border:0;border-radius:12px;color:#fff}
+.scr{position:fixed;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;color:#fff;background:radial-gradient(circle at 50% 20%,#5a0a00,#120000 70%);text-align:center;padding:16px;box-sizing:border-box;overflow-y:auto}
+.scr h1{color:#ff3b30;font-size:44px;margin:6px;text-shadow:0 0 14px #f00}
+.scr h2{color:#ff6b4a;margin:6px}
+.menu{display:flex;flex-direction:column;gap:10px;width:min(80vw,300px);margin-top:10px}
+.btn{padding:13px 20px;font-size:19px;background:#7b1a14;border:1px solid #ff5a3c;border-radius:12px;color:#fff}
+.btn.main{background:#c0392b;font-size:24px;padding:16px}
+.btn:active{filter:brightness(1.4)}
+.btn:disabled{opacity:.4}
+.card{background:rgba(0,0,0,.45);border:1px solid #6b1a10;border-radius:12px;padding:10px 14px;margin:6px 0;width:min(86vw,340px);box-sizing:border-box;font-size:14px;line-height:1.6}
+.item{display:flex;justify-content:space-between;align-items:center;gap:8px;text-align:left}
+.item .btn{font-size:14px;padding:8px 12px;white-space:nowrap}
+textarea{width:100%;height:70px;background:#200;color:#fff;border:1px solid #a33;border-radius:8px;font-size:11px;box-sizing:border-box}
+.sw{display:inline-block;width:18px;height:18px;border-radius:4px;margin-right:3px;vertical-align:middle}
 </style>
 </head>
 <body>
@@ -32,12 +41,108 @@ button:active{opacity:1;filter:brightness(1.3)}
   <div class="row f"><b>車頭</b><button id="fl">◀</button><button id="fr">▶</button></div>
   <div class="row r"><b>車尾</b><button id="rl">◀</button><button id="rr">▶</button></div>
 </div>
-<div id="msg"><h1>🔥 地獄列車 3D 🔥</h1>
-<p>上排紫色＝【車頭】　下排橘色＝【車尾】<br>(電腦：←/→ 車頭，A/D 車尾，空白鍵暫停)<br>也可在螢幕左半滑動控制車尾、右半控制車頭<br>輾過被綁住的人得分，頭上 ×數字是倍率<br><br>🛡 護盾：擋一次障礙　✨ 雙倍分數　⏱ 慢動作<br>⚠ 迎面列車很長，要整段閃開！</p>
-<p id="best"></p><button class="big" id="start">開始遊戲</button></div>
+
+<!-- 大廳 -->
+<div class="scr" id="lobby" style="display:flex">
+  <div style="font-size:54px">🚆🔥</div>
+  <h1>地獄列車</h1>
+  <div style="color:#aaa;font-size:13px">雙節列車・軌道求生</div>
+  <div class="card" id="lobbyInfo"></div>
+  <div class="menu">
+    <button class="btn main" onclick="startGame()">▶ 開始遊戲</button>
+    <button class="btn" onclick="openShop()">🛒 商店與升級</button>
+    <button class="btn" onclick="show('howto')">📖 玩法說明</button>
+    <button class="btn" onclick="openSettings()">⚙ 設定與存檔</button>
+  </div>
+  <div class="card" id="board" style="margin-top:12px"></div>
+</div>
+
+<!-- 玩法 -->
+<div class="scr" id="howto">
+  <h2>📖 玩法說明</h2>
+  <div class="card">
+  上排紫色按鈕＝<b>車頭</b>，下排橘色按鈕＝<b>車尾</b><br>
+  電腦：←/→ 車頭，A/D 車尾，空白鍵暫停<br>
+  螢幕左半滑動＝車尾，右半滑動＝車頭<br><br>
+  輾過被綁住的人得分，頭上 ×數字是倍率<br>
+  連續輾過會有連擊加成<br>
+  撞到障礙就會脫軌<br>
+  ⚠ 迎面列車很長，要整段閃開<br><br>
+  🛡 護盾：擋一次障礙<br>✨ 雙倍分數<br>⏱ 慢動作<br><br>
+  結算時得分會換成「地獄幣」，可到商店買外觀與升級
+  </div>
+  <button class="btn" onclick="show('lobby');renderLobby()">← 返回大廳</button>
+</div>
+
+<!-- 商店 -->
+<div class="scr" id="shop">
+  <h2>🛒 商店</h2>
+  <div id="coinBar" style="font-size:20px;color:#f1c40f"></div>
+  <div id="shopList"></div>
+  <button class="btn" onclick="show('lobby');renderLobby()">← 返回大廳</button>
+</div>
+
+<!-- 設定 -->
+<div class="scr" id="settings">
+  <h2>⚙ 設定與存檔</h2>
+  <div class="card">
+    <div class="item"><span>玩家名稱：<b id="nm"></b></span><button class="btn" onclick="rename()">修改</button></div>
+    <div class="item"><span>音效</span><button class="btn" id="tSound" onclick="toggle('sound')"></button></div>
+    <div class="item"><span>震動</span><button class="btn" id="tVib" onclick="toggle('vib')"></button></div>
+  </div>
+  <div class="card">
+    <b>存檔管理</b><br>
+    <div style="color:#aaa;font-size:12px">進度自動儲存在這支手機的瀏覽器。換裝置可用存檔碼轉移。</div>
+    <div class="item" style="margin-top:6px"><button class="btn" onclick="exportSave()">匯出存檔碼</button><button class="btn" onclick="importSave()">匯入存檔碼</button></div>
+    <textarea id="codeBox" placeholder="存檔碼會顯示在這裡；要匯入就貼上後按「匯入」"></textarea>
+    <button class="btn" style="margin-top:6px;background:#400" onclick="wipe()">🗑 清除全部存檔</button>
+  </div>
+  <button class="btn" onclick="show('lobby');renderLobby()">← 返回大廳</button>
+</div>
+
+<!-- 暫停 -->
+<div class="scr" id="pauseScr" style="background:rgba(0,0,0,.75)">
+  <h1>⏸ 暫停</h1>
+  <div class="menu">
+    <button class="btn main" onclick="togglePause()">繼續</button>
+    <button class="btn" onclick="quitToLobby()">放棄並回大廳</button>
+  </div>
+</div>
+
+<!-- 結算 -->
+<div class="scr" id="over">
+  <h1>💥 列車脫軌！</h1>
+  <div class="card" id="overInfo" style="font-size:16px"></div>
+  <div class="menu">
+    <button class="btn main" onclick="startGame()">再來一次</button>
+    <button class="btn" onclick="openShop()">🛒 商店</button>
+    <button class="btn" onclick="show('lobby');renderLobby()">回大廳</button>
+  </div>
+</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
+const $=id=>document.getElementById(id);
+/* ================= 存檔系統 ================= */
+const KEY='hellTrain_save_v1';
+const SKINS=[
+ {n:'經典紅',f:0x8e44ad,r:0xd35400,b:0xff3b30,cost:0},
+ {n:'冥火黑',f:0x222222,r:0x550000,b:0xff6600,cost:300},
+ {n:'幽靈藍',f:0x4aa3ff,r:0x1abc9c,b:0xecf0f1,cost:600},
+ {n:'黃金列車',f:0xf1c40f,r:0xe67e22,b:0xffd700,cost:1000}];
+const defSave=()=>({v:1,name:'玩家',best:0,coins:0,games:0,kills:0,totalScore:0,maxStage:1,
+  skin:0,owned:[0],up:{shield:false,dur:0},sound:true,vib:true,hist:[]});
+let S=defSave();
+function loadSave(){
+  try{const r=localStorage.getItem(KEY);if(r){const o=JSON.parse(r);S=Object.assign(defSave(),o);S.up=Object.assign({shield:false,dur:0},o.up||{});}
+  else{const old=+localStorage.getItem('best')||0;S.best=old;}}catch(e){S=defSave();}
+}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
+loadSave();
+document.addEventListener('visibilitychange',save);
+addEventListener('pagehide',save);
+
+/* ================= 3D 場景 ================= */
 const scene=new THREE.Scene();
 scene.background=new THREE.Color(0x1a0000);
 scene.fog=new THREE.Fog(0x2a0500,30,110);
@@ -45,7 +150,7 @@ const camera=new THREE.PerspectiveCamera(60,innerWidth/innerHeight,.1,200);
 const renderer=new THREE.WebGLRenderer({antialias:true});
 renderer.setPixelRatio(Math.min(devicePixelRatio,2));
 renderer.setSize(innerWidth,innerHeight);
-document.body.appendChild(renderer.domElement);
+document.body.insertBefore(renderer.domElement,document.body.firstChild);
 function fit(){renderer.setSize(innerWidth,innerHeight);camera.aspect=innerWidth/innerHeight;camera.fov=camera.aspect<.8?75:60;camera.updateProjectionMatrix();}
 addEventListener('resize',fit);fit();
 scene.add(new THREE.AmbientLight(0xff9977,.7));
@@ -74,20 +179,19 @@ function label(txt,color,size=1){
   sp.scale.set(3*size,1.5*size,1);return sp;
 }
 
-// 音效
 let AC=null;
 function beep(f,d,type='square',vol=.12,slide=0){
+  if(!S.sound)return;
   try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();
   const o=AC.createOscillator(),g=AC.createGain();o.type=type;o.frequency.value=f;
   if(slide)o.frequency.exponentialRampToValueAtTime(Math.max(30,f+slide),AC.currentTime+d);
   g.gain.value=vol;g.gain.exponentialRampToValueAtTime(.001,AC.currentTime+d);
   o.connect(g);g.connect(AC.destination);o.start();o.stop(AC.currentTime+d);}catch(e){}
 }
-const vib=n=>{try{navigator.vibrate&&navigator.vibrate(n)}catch(e){}};
+const vib=n=>{if(!S.vib)return;try{navigator.vibrate&&navigator.vibrate(n)}catch(e){}};
 
-// 列車
 const body=box(1.5,1.1,1,0xff3b30);scene.add(body);
-body.add(Object.assign(box(1.55,.25,1.02,0x111111)));
+body.add(box(1.55,.25,1.02,0x111111));
 function bogie(c){const g=new THREE.Group();
   const b=box(1.7,.9,1.8,c);b.position.y=.8;g.add(b);
   for(const sx of[-.9,.9])for(const sz of[-.55,.55]){const w=new THREE.Mesh(new THREE.CylinderGeometry(.35,.35,.2,12),mat(0));w.rotation.z=Math.PI/2;w.position.set(sx,.35,sz);g.add(w);}
@@ -96,6 +200,9 @@ const bF=bogie(0x8e44ad),bR=bogie(0xd35400);
 const lamp=new THREE.Mesh(new THREE.SphereGeometry(.25),new THREE.MeshBasicMaterial({color:0xffaa00}));lamp.position.set(0,.9,-.95);bF.add(lamp);
 const shieldMesh=new THREE.Mesh(new THREE.SphereGeometry(1.6,16,12),new THREE.MeshBasicMaterial({color:0x4aa3ff,transparent:true,opacity:.3}));
 shieldMesh.visible=false;scene.add(shieldMesh);
+function applySkin(){const k=SKINS[S.skin]||SKINS[0];
+  bF.children[0].material.color.set(k.f);bR.children[0].material.color.set(k.r);body.material.color.set(k.b);}
+applySkin();
 
 const TYPES=[{m:1,w:50,c:'#bdc3c7'},{m:2,w:30,c:'#2ecc71'},{m:3,w:14,c:'#3498db'},{m:5,w:6,c:'#f1c40f'}];
 const SKIN=[0xffdbac,0xf1c27d,0xe0ac69,0xc68642,0x8d5524];
@@ -122,7 +229,7 @@ function makePerson(){
 }
 function makeObstacle(){
   const g=new THREE.Group(),r=Math.random();
-  if(r<.25){ // 迎面列車
+  if(r<.25){
     const b=box(2.2,2.2,14,0x7a1010);b.position.y=1.2;g.add(b);
     const f=box(2.3,1.2,.3,0xffee88);f.position.set(0,1.4,7.1);g.add(f);
     const w=box(2.25,.5,14.1,0x111111);w.position.y=1.5;g.add(w);
@@ -144,12 +251,12 @@ function makePower(){
   g.userData={k:'u',kind,half:.8};return g;
 }
 
-let st='menu',score=0,best=+localStorage.getItem('best')||0,speed,dist,items=[],nextZ,combo,kills,shake=0,flash=0,stage=1;
+/* ================= 遊戲狀態 ================= */
+let st='lobby',score=0,speed=22,dist=0,items=[],nextZ=-40,combo=0,kills=0,shake=0,flash=0,stage=1;
 let shield=false,dbl=0,slow=0,paused=false;
 let rear={l:1,x:0},front={l:1,x:0},parts=[],splats=[],pops=[],last=performance.now();
-const $=id=>document.getElementById(id);
 function clearAll(){for(const a of[items,parts,splats,pops])for(const o of a)scene.remove(o.m||o);items=[];parts=[];splats=[];pops=[];}
-function reset(){clearAll();score=0;speed=22;dist=0;nextZ=-40;combo=0;kills=0;stage=1;shield=false;dbl=0;slow=0;paused=false;
+function reset(){clearAll();score=0;speed=22;dist=0;nextZ=-40;combo=0;kills=0;stage=1;shield=!!S.up.shield;dbl=0;slow=0;paused=false;
   rear={l:1,x:0};front={l:1,x:0};scene.background.set(0x1a0000);scene.fog.color.set(0x2a0500);}
 function spawnRow(){
   let obs=[];
@@ -168,14 +275,79 @@ const acts={rl:()=>move(rear,-1),rr:()=>move(rear,1),fl:()=>move(front,-1),fr:()
 for(const id in acts){const e=$(id);
   e.addEventListener('touchstart',ev=>{ev.preventDefault();acts[id]();},{passive:false});
   e.addEventListener('mousedown',acts[id]);}
-function togglePause(){if(st!='play')return;paused=!paused;$('pause').textContent=paused?'▶':'⏸';last=performance.now();}
-$('pause').addEventListener('click',togglePause);
 addEventListener('keydown',e=>{if(e.key=='a')acts.rl();if(e.key=='d')acts.rr();if(e.key=='ArrowLeft')acts.fl();if(e.key=='ArrowRight')acts.fr();if(e.key==' ')togglePause();});
 let sw=null;
 renderer.domElement.addEventListener('touchstart',e=>{const t=e.changedTouches[0];sw={x:t.clientX,side:t.clientX<innerWidth/2?'r':'f'};},{passive:true});
 renderer.domElement.addEventListener('touchend',e=>{if(!sw)return;const dx=e.changedTouches[0].clientX-sw.x;if(Math.abs(dx)>30)move(sw.side=='r'?rear:front,dx>0?1:-1);sw=null;},{passive:true});
-$('start').onclick=()=>{reset();st='play';$('msg').style.display='none';last=performance.now();beep(200,.2,'sawtooth',.1,300);};
 
+/* ================= 畫面切換 ================= */
+function show(id){
+  document.querySelectorAll('.scr').forEach(e=>e.style.display='none');
+  if(id)$(id).style.display='flex';
+  const playing=!id;
+  $('hud').style.display=playing?'block':'none';
+  $('ui').style.display=playing?'flex':'none';
+  $('pause').style.display=playing?'block':'none';
+}
+function renderLobby(){
+  st='lobby';
+  $('lobbyInfo').innerHTML=`👤 <b>${S.name}</b>　🪙 <b style="color:#f1c40f">${S.coins}</b><br>
+   🏆 最高分 ${S.best}　🎮 場數 ${S.games}<br>💀 累計輾過 ${S.kills}　🔥 最高關卡 ${S.maxStage}<br>
+   🚆 目前列車：${SKINS[S.skin].n}`;
+  const h=[...S.hist].sort((a,b)=>b.s-a.s).slice(0,5);
+  $('board').innerHTML='<b>🏅 本機排行榜</b><br>'+(h.length?h.map((x,i)=>`${i+1}. ${x.s} 分　<span style="color:#888">${x.d}</span>`).join('<br>'):'還沒有紀錄');
+}
+function startGame(){
+  reset();applySkin();st='play';show(null);$('pause').textContent='⏸';last=performance.now();beep(200,.2,'sawtooth',.1,300);
+}
+function togglePause(){
+  if(st!='play')return;
+  paused=!paused;last=performance.now();
+  $('pauseScr').style.display=paused?'flex':'none';
+}
+function quitToLobby(){paused=false;st='lobby';clearAll();show('lobby');renderLobby();}
+
+/* ================= 商店 ================= */
+function openShop(){show('shop');renderShop();}
+function renderShop(){
+  $('coinBar').textContent='🪙 '+S.coins;
+  let h='<div class="card"><b>🚆 列車外觀</b>';
+  SKINS.forEach((k,i)=>{
+    const own=S.owned.includes(i),sel=S.skin==i;
+    const sw=c=>`<span class="sw" style="background:#${c.toString(16).padStart(6,'0')}"></span>`;
+    h+=`<div class="item"><span>${sw(k.f)}${sw(k.b)}${sw(k.r)} ${k.n}</span>`+
+      (sel?'<button class="btn" disabled>使用中</button>':own?`<button class="btn" onclick="useSkin(${i})">使用</button>`:`<button class="btn" onclick="buySkin(${i})" ${S.coins<k.cost?'disabled':''}>🪙${k.cost}</button>`)+'</div>';
+  });
+  h+='</div><div class="card"><b>⚡ 升級</b>';
+  h+=`<div class="item"><span>開局護盾（每場自動帶 🛡）</span>`+(S.up.shield?'<button class="btn" disabled>已擁有</button>':`<button class="btn" onclick="buyShield()" ${S.coins<250?'disabled':''}>🪙250</button>`)+'</div>';
+  const lv=S.up.dur,cost=[150,300,500][lv];
+  h+=`<div class="item"><span>道具持續時間 Lv${lv}/3</span>`+(lv>=3?'<button class="btn" disabled>已滿級</button>':`<button class="btn" onclick="buyDur()" ${S.coins<cost?'disabled':''}>🪙${cost}</button>`)+'</div></div>';
+  $('shopList').innerHTML=h;
+}
+function useSkin(i){S.skin=i;applySkin();save();renderShop();}
+function buySkin(i){const k=SKINS[i];if(S.coins>=k.cost){S.coins-=k.cost;S.owned.push(i);S.skin=i;applySkin();save();renderShop();beep(800,.15,'sine',.12,500);}}
+function buyShield(){if(S.coins>=250&&!S.up.shield){S.coins-=250;S.up.shield=true;save();renderShop();beep(800,.15,'sine',.12,500);}}
+function buyDur(){const c=[150,300,500][S.up.dur];if(S.up.dur<3&&S.coins>=c){S.coins-=c;S.up.dur++;save();renderShop();beep(800,.15,'sine',.12,500);}}
+
+/* ================= 設定 / 存檔管理 ================= */
+function openSettings(){show('settings');renderSettings();}
+function renderSettings(){
+  $('nm').textContent=S.name;
+  $('tSound').textContent=S.sound?'開':'關';$('tVib').textContent=S.vib?'開':'關';
+}
+function toggle(k){S[k]=!S[k];save();renderSettings();}
+function rename(){const n=prompt('輸入玩家名稱（最多 10 字）',S.name);if(n&&n.trim()){S.name=n.trim().slice(0,10);save();renderSettings();}}
+function exportSave(){$('codeBox').value=btoa(unescape(encodeURIComponent(JSON.stringify(S))));$('codeBox').select();}
+function importSave(){
+  try{const o=JSON.parse(decodeURIComponent(escape(atob($('codeBox').value.trim()))));
+    if(typeof o!='object'||o.v!==1)throw 0;
+    S=Object.assign(defSave(),o);S.up=Object.assign({shield:false,dur:0},o.up||{});
+    save();applySkin();renderSettings();alert('匯入成功！');
+  }catch(e){alert('存檔碼無效');}
+}
+function wipe(){if(confirm('確定要清除全部存檔嗎？無法復原！')){S=defSave();save();applySkin();renderSettings();}}
+
+/* ================= 特效 ================= */
 function burst(x,z,col){
   for(let i=0;i<30;i++){
     const m=box(.15,.15,.15,i%2?0xcc0000:col);m.position.set(x,.5,z);scene.add(m);
@@ -195,14 +367,22 @@ function showStage(){
   const s=$('stage');s.textContent='第 '+stage+' 關';s.style.opacity=1;setTimeout(()=>s.style.opacity=0,1400);
   const c=STAGECOL[(stage-1)%STAGECOL.length];scene.background.set(c[0]);scene.fog.color.set(c[1]);beep(500,.3,'triangle',.1,400);
 }
+
+/* ================= 結算 ================= */
 function gameOver(){
   st='over';shake=.6;beep(120,.6,'sawtooth',.2,-80);vib(300);
-  if(score>best){best=score;localStorage.setItem('best',best);}
-  const m=$('msg');m.style.display='flex';
-  m.querySelector('h1').textContent='💥 列車脫軌！';
-  m.querySelector('p').innerHTML='得分：'+score+'<br>輾過：'+kills+' 人　到達第 '+stage+' 關';
-  $('best').textContent='最高分：'+best;$('start').textContent='再來一次';
+  const earn=Math.floor(score/10)+kills;
+  const newBest=score>S.best;
+  S.games++;S.kills+=kills;S.totalScore+=score;S.coins+=earn;S.maxStage=Math.max(S.maxStage,stage);
+  if(newBest)S.best=score;
+  const d=new Date();S.hist.push({s:score,d:`${d.getMonth()+1}/${d.getDate()}`});
+  S.hist=S.hist.sort((a,b)=>b.s-a.s).slice(0,20);
+  save();
+  $('overInfo').innerHTML=`得分：<b style="font-size:26px">${score}</b> ${newBest?'<span style="color:#f1c40f">🎉 新紀錄！</span>':''}<br>
+   輾過：${kills} 人　到達第 ${stage} 關<br>🪙 獲得地獄幣 +${earn}（共 ${S.coins}）<br>最高分：${S.best}`;
+  setTimeout(()=>{if(st=='over')show('over');},700);
 }
+
 function update(rdt){
   const dt=rdt*(slow>0?.6:1);
   speed=Math.min(55,speed+dt*.6);dist+=speed*dt;
@@ -220,7 +400,7 @@ function update(rdt){
           gameOver();return;}
         if(u.k=='u'){
           u.dead=true;scene.remove(it);beep(800,.15,'sine',.12,500);
-          if(u.kind=='shield')shield=true;if(u.kind=='x2')dbl=10;if(u.kind=='slow')slow=6;
+          if(u.kind=='shield')shield=true;if(u.kind=='x2')dbl=10+S.up.dur*3;if(u.kind=='slow')slow=6+S.up.dur*2;
           pop(LX[u.lane],z,PU[u.kind].i,'#fff');continue;}
         u.dead=true;scene.remove(it);combo=Math.min(combo+1,10);kills++;shake=.15;flash=.3;
         const pts=Math.round(u.ty.m*10*(1+Math.floor(combo/3)*.5)*(dbl>0?2:1));score+=pts;
@@ -238,16 +418,18 @@ function update(rdt){
   parts=parts.filter(p=>{if(p.t>(p.s?1:.9)){scene.remove(p.m);return false}return true});
   for(const p of pops){p.t+=rdt;p.m.position.y+=2*rdt;p.m.material.opacity=Math.max(0,1-p.t);}
   pops=pops.filter(p=>{if(p.t>1){scene.remove(p.m);return false}return true});
-  $('sc').textContent='得分 '+score;$('sub').textContent='最高 '+best+'　輾過 '+kills+'　第'+stage+'關';
+  $('sc').textContent='得分 '+score;$('sub').textContent='最高 '+Math.max(S.best,score)+'　輾過 '+kills+'　第'+stage+'關';
   $('cb').textContent=combo>1?'連擊 '+combo:'';
   $('stat').textContent=(shield?'🛡 ':'')+(dbl>0?'✨'+Math.ceil(dbl)+'s ':'')+(slow>0?'⏱'+Math.ceil(slow)+'s':'');
 }
 function render(){
+  // 大廳時列車慢慢前進當背景
+  if(st=='lobby'){dist+=6*(1/60);front.x=rear.x=0;}
   bF.position.set(front.x,0,ZF);bR.position.set(rear.x,0,ZR);
   const a=new THREE.Vector3(front.x,1.5,ZF),b=new THREE.Vector3(rear.x,1.5,ZR);
   body.position.copy(a).add(b).multiplyScalar(.5);
   body.scale.z=a.distanceTo(b);body.lookAt(a);
-  shieldMesh.visible=shield;shieldMesh.position.copy(body.position);shieldMesh.scale.set(1,1,1+body.scale.z*.5);shieldMesh.lookAt(a);
+  shieldMesh.visible=shield&&st!='lobby';shieldMesh.position.copy(body.position);shieldMesh.scale.set(1,1,1+body.scale.z*.5);shieldMesh.lookAt(a);
   const off=dist%3;let i=0;
   for(let l=0;l<3;l++)for(let k=0;k<50;k++)sleepers[i++].position.set(LX[l],.05,-k*3+10+off);
   fires.forEach((f,i)=>{f.position.z=((-i*10+dist)%140)-120;f.scale.y=1+Math.sin(performance.now()/100+i)*.2;});
@@ -263,7 +445,8 @@ function loop(t){
   if(shake>0)shake-=dt;if(flash>0)flash-=dt;
   render();requestAnimationFrame(loop);
 }
-reset();$('best').textContent='最高分：'+best;
+$('pause').addEventListener('click',togglePause);
+show('lobby');renderLobby();
 requestAnimationFrame(loop);
 </script>
 </body>
