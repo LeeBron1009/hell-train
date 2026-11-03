@@ -11,13 +11,15 @@ canvas{display:block}
 #stat{color:#7fdbff;font-size:15px}
 #flash{position:fixed;inset:0;background:#f00;opacity:0;pointer-events:none}
 #stage{position:fixed;left:0;right:0;top:30%;text-align:center;color:#ff3b30;font-size:34px;font-weight:bold;text-shadow:0 0 10px #000;opacity:0;pointer-events:none;transition:opacity .4s}
+#toast{position:fixed;left:50%;top:70px;transform:translateX(-50%);background:#1b1b1b;border:2px solid #f1c40f;color:#fff;padding:10px 16px;border-radius:12px;font-size:15px;opacity:0;pointer-events:none;transition:opacity .3s;z-index:99;text-align:center}
 #pause{position:fixed;right:12px;top:10px;width:46px;height:46px;border-radius:12px;border:0;background:rgba(255,255,255,.2);color:#fff;font-size:20px;display:none}
 #ui{position:fixed;left:50%;transform:translateX(-50%);bottom:max(14px,env(safe-area-inset-bottom));display:none;flex-direction:column;gap:8px;width:min(92vw,360px)}
 .row{display:flex;gap:8px;align-items:center}
 .row b{color:#fff;font-size:14px;width:44px;text-align:center;text-shadow:0 0 4px #000}
 .row button{flex:1;height:58px;border-radius:14px;border:0;font-size:28px;color:#fff;opacity:.85}
 .f button{background:#8e44ad}.r button{background:#d35400}
-.scr{position:fixed;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;color:#fff;background:radial-gradient(circle at 50% 20%,#5a0a00,#120000 70%);text-align:center;padding:16px;box-sizing:border-box;overflow-y:auto}
+.scr{position:fixed;inset:0;display:none;flex-direction:column;align-items:center;color:#fff;background:radial-gradient(circle at 50% 20%,#5a0a00,#120000 70%);text-align:center;padding:16px;box-sizing:border-box;overflow-y:auto}
+.scr>:first-child{margin-top:auto}.scr>:last-child{margin-bottom:auto}
 .scr h1{color:#ff3b30;font-size:44px;margin:6px;text-shadow:0 0 14px #f00}
 .scr h2{color:#ff6b4a;margin:6px}
 .menu{display:flex;flex-direction:column;gap:10px;width:min(80vw,300px);margin-top:10px}
@@ -25,17 +27,21 @@ canvas{display:block}
 .btn.main{background:#c0392b;font-size:24px;padding:16px}
 .btn:active{filter:brightness(1.4)}
 .btn:disabled{opacity:.4}
-.card{background:rgba(0,0,0,.45);border:1px solid #6b1a10;border-radius:12px;padding:10px 14px;margin:6px 0;width:min(86vw,340px);box-sizing:border-box;font-size:14px;line-height:1.6}
-.item{display:flex;justify-content:space-between;align-items:center;gap:8px;text-align:left}
+.card{background:rgba(0,0,0,.45);border:1px solid #6b1a10;border-radius:12px;padding:10px 14px;margin:6px 0;width:min(88vw,360px);box-sizing:border-box;font-size:14px;line-height:1.6}
+.item{display:flex;justify-content:space-between;align-items:center;gap:8px;text-align:left;margin:4px 0}
 .item .btn{font-size:14px;padding:8px 12px;white-space:nowrap}
+.dot{background:#f33;border-radius:10px;padding:0 7px;font-size:12px;margin-left:6px}
 textarea{width:100%;height:70px;background:#200;color:#fff;border:1px solid #a33;border-radius:8px;font-size:11px;box-sizing:border-box}
 .sw{display:inline-block;width:18px;height:18px;border-radius:4px;margin-right:3px;vertical-align:middle}
+.bar{height:6px;background:#333;border-radius:4px;margin-top:3px}.bar i{display:block;height:100%;background:#2ecc71;border-radius:4px}
+.small{color:#aaa;font-size:12px}
 </style>
 </head>
 <body>
 <div id="hud"><div id="sc" style="font-size:22px">得分 0</div><div id="sub" style="font-size:14px"></div><div id="cb" style="color:#f1c40f;font-size:18px"></div><div id="stat"></div></div>
 <button id="pause">⏸</button>
 <div id="stage"></div>
+<div id="toast"></div>
 <div id="flash"></div>
 <div id="ui">
   <div class="row f"><b>車頭</b><button id="fl">◀</button><button id="fr">▶</button></div>
@@ -45,30 +51,39 @@ textarea{width:100%;height:70px;background:#200;color:#fff;border:1px solid #a33
 <!-- 大廳 -->
 <div class="scr" id="lobby" style="display:flex">
   <h1>地獄列車</h1>
-  <div style="color:#aaa;font-size:13px">雙節列車・軌道求生</div>
+  <div class="small">雙節列車・軌道求生</div>
   <div class="card" id="lobbyInfo"></div>
   <div class="menu">
     <button class="btn main" onclick="startGame()">▶ 開始遊戲</button>
     <button class="btn" onclick="openShop()">🛒 商店與升級</button>
+    <button class="btn" onclick="openMissions()">📅 每日任務<span id="mDot"></span></button>
+    <button class="btn" onclick="openAch()">🏅 成就</button>
+    <button class="btn" onclick="openLB()">🌍 排行榜</button>
     <button class="btn" onclick="show('howto')">📖 玩法說明</button>
     <button class="btn" onclick="openSettings()">⚙ 設定與存檔</button>
   </div>
-  <div class="card" id="board" style="margin-top:12px"></div>
 </div>
 
 <!-- 玩法 -->
 <div class="scr" id="howto">
   <h2>📖 玩法說明</h2>
   <div class="card">
-  上排紫色按鈕＝<b>車頭</b>，下排橘色按鈕＝<b>車尾</b><br>
+  上排紫色＝<b>車頭</b>，下排橘色＝<b>車尾</b><br>
   電腦：←/→ 車頭，A/D 車尾，空白鍵暫停<br>
   螢幕左半滑動＝車尾，右半滑動＝車頭<br><br>
-  輾過被綁住的人得分，頭上 ×數字是倍率<br>
-  連續輾過會有連擊加成<br>
-  撞到障礙就會脫軌<br>
+  <b>民眾</b><br>
+  輾過得分，頭上 ×數字是倍率，連擊會加成<br>
+  💨 逃跑者：快到時會突然換軌<br>
+  🍔 大胖子：車頭、車尾各輾一次才算（3 倍分）<br>
+  💰 金色民眾：×10，只出現一下就消失<br><br>
+  <b>軌道</b><br>
+  🟨 轉轍器：碰到會把那節車輪推到旁邊軌道（箭頭是方向）<br>
+  ⬛ 斷軌（第 2 關起）：掉下去就脫軌，兩節都要閃<br>
+  ⚡ 加速帶：4 秒加速，分數 ×1.5<br>
+  🌑 隧道：視野變窄，但人變多<br>
   ⚠ 迎面列車很長，要整段閃開<br><br>
-  🛡 護盾：擋一次障礙<br>✨ 雙倍分數<br>⏱ 慢動作<br><br>
-  結算時得分會換成「地獄幣」，可到商店買外觀與升級
+  <b>道具</b> 🛡護盾　✨雙倍分數　⏱慢動作<br><br>
+  結算得到地獄幣，可買外觀；每日任務、成就也能拿幣
   </div>
   <button class="btn" onclick="show('lobby');renderLobby()">← 返回大廳</button>
 </div>
@@ -78,6 +93,28 @@ textarea{width:100%;height:70px;background:#200;color:#fff;border:1px solid #a33
   <h2>🛒 商店</h2>
   <div id="coinBar" style="font-size:20px;color:#f1c40f"></div>
   <div id="shopList"></div>
+  <button class="btn" onclick="show('lobby');renderLobby()">← 返回大廳</button>
+</div>
+
+<!-- 每日任務 -->
+<div class="scr" id="missions">
+  <h2>📅 每日任務</h2>
+  <div class="small">每天自動更新（以手機日期為準）</div>
+  <div id="mList"></div>
+  <button class="btn" onclick="show('lobby');renderLobby()">← 返回大廳</button>
+</div>
+
+<!-- 成就 -->
+<div class="scr" id="achs">
+  <h2>🏅 成就</h2>
+  <div id="aList"></div>
+  <button class="btn" onclick="show('lobby');renderLobby()">← 返回大廳</button>
+</div>
+
+<!-- 排行榜 -->
+<div class="scr" id="lb">
+  <h2>🌍 排行榜</h2>
+  <div class="card" id="lbBody">載入中…</div>
   <button class="btn" onclick="show('lobby');renderLobby()">← 返回大廳</button>
 </div>
 
@@ -91,8 +128,8 @@ textarea{width:100%;height:70px;background:#200;color:#fff;border:1px solid #a33
   </div>
   <div class="card">
     <b>存檔管理</b><br>
-    <div style="color:#aaa;font-size:12px">進度自動儲存在這支手機的瀏覽器。換裝置可用存檔碼轉移。</div>
-    <div class="item" style="margin-top:6px"><button class="btn" onclick="exportSave()">匯出存檔碼</button><button class="btn" onclick="importSave()">匯入存檔碼</button></div>
+    <div class="small">進度自動儲存在這支手機的瀏覽器。換裝置可用存檔碼轉移。</div>
+    <div class="item"><button class="btn" onclick="exportSave()">匯出存檔碼</button><button class="btn" onclick="importSave()">匯入存檔碼</button></div>
     <textarea id="codeBox" placeholder="存檔碼會顯示在這裡；要匯入就貼上後按「匯入」"></textarea>
     <button class="btn" style="margin-top:6px;background:#400" onclick="wipe()">🗑 清除全部存檔</button>
   </div>
@@ -114,6 +151,7 @@ textarea{width:100%;height:70px;background:#200;color:#fff;border:1px solid #a33
   <div class="card" id="overInfo" style="font-size:16px"></div>
   <div class="menu">
     <button class="btn main" onclick="startGame()">再來一次</button>
+    <button class="btn" onclick="openMissions()">📅 任務</button>
     <button class="btn" onclick="openShop()">🛒 商店</button>
     <button class="btn" onclick="show('lobby');renderLobby()">回大廳</button>
   </div>
@@ -122,24 +160,106 @@ textarea{width:100%;height:70px;background:#200;color:#fff;border:1px solid #a33
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+/* ====== Firebase 全球排行榜設定（沒填就只顯示本機紀錄）====== */
+const FB_URL=''; // 例如 'https://你的專案-default-rtdb.asia-southeast1.firebasedatabase.app'
+
+/* ================= 外觀 / 特效資料 ================= */
+const FXS={
+ blood:{c:[0xcc0000,0xff3333],splat:0x8b0000,icon:'💀'},
+ fire:{c:[0xff6600,0xffcc00],splat:0x662200,icon:'🔥'},
+ ghost:{c:[0x66ccff,0xffffff],splat:0x224488,icon:'👻'},
+ gold:{c:[0xffd700,0xfff2a0],splat:0x886600,icon:'💰'},
+ toxic:{c:[0x33ff33,0x116611],splat:0x226611,icon:'☠'},
+ rainbow:{c:null,splat:0x6633aa,icon:'🌈'}};
+const SKINS=[
+ {n:'經典紅',f:0x8e44ad,r:0xd35400,b:0xff3b30,lamp:0xffaa00,fx:'blood',cost:0},
+ {n:'冥火黑（火焰特效）',f:0x222222,r:0x550000,b:0xff6600,lamp:0xff4400,fx:'fire',cost:300},
+ {n:'幽靈藍（幽靈特效）',f:0x4aa3ff,r:0x1abc9c,b:0xecf0f1,lamp:0x66ccff,fx:'ghost',cost:600},
+ {n:'黃金列車（金幣特效）',f:0xf1c40f,r:0xe67e22,b:0xffd700,lamp:0xffee00,fx:'gold',cost:1000},
+ {n:'毒液綠（毒霧特效）',f:0x1e8449,r:0x145a32,b:0x58d68d,lamp:0x66ff66,fx:'toxic',cost:800},
+ {n:'彩虹（彩虹車燈）',f:0xff66cc,r:0x66ccff,b:0xffffff,lamp:0xffffff,fx:'rainbow',cost:1500}];
+
 /* ================= 存檔系統 ================= */
 const KEY='hellTrain_save_v1';
-const SKINS=[
- {n:'經典紅',f:0x8e44ad,r:0xd35400,b:0xff3b30,cost:0},
- {n:'冥火黑',f:0x222222,r:0x550000,b:0xff6600,cost:300},
- {n:'幽靈藍',f:0x4aa3ff,r:0x1abc9c,b:0xecf0f1,cost:600},
- {n:'黃金列車',f:0xf1c40f,r:0xe67e22,b:0xffd700,cost:1000}];
 const defSave=()=>({v:1,name:'玩家',best:0,coins:0,games:0,kills:0,totalScore:0,maxStage:1,
-  skin:0,owned:[0],up:{shield:false,dur:0},sound:true,vib:true,hist:[]});
+  skin:0,owned:[0],up:{shield:false,dur:0},sound:true,vib:true,hist:[],
+  missions:{date:'',list:[]},ach:{}});
 let S=defSave();
+function mergeSave(o){S=Object.assign(defSave(),o);S.up=Object.assign({shield:false,dur:0},o.up||{});
+  S.missions=o.missions||{date:'',list:[]};S.ach=o.ach||{};}
 function loadSave(){
-  try{const r=localStorage.getItem(KEY);if(r){const o=JSON.parse(r);S=Object.assign(defSave(),o);S.up=Object.assign({shield:false,dur:0},o.up||{});}
-  else{const old=+localStorage.getItem('best')||0;S.best=old;}}catch(e){S=defSave();}
+  try{const r=localStorage.getItem(KEY);if(r)mergeSave(JSON.parse(r));
+  else S.best=+localStorage.getItem('best')||0;}catch(e){S=defSave();}
 }
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
 loadSave();
 document.addEventListener('visibilitychange',save);
 addEventListener('pagehide',save);
+
+/* ================= 每日任務 ================= */
+const MPOOL=[
+ {id:'k30',t:'一場輾過 30 人',g:30,mode:'best',key:'kills',r:80},
+ {id:'s1500',t:'一場得到 1500 分',g:1500,mode:'best',key:'score',r:120},
+ {id:'c10',t:'連擊達到 10',g:10,mode:'best',key:'combo',r:100},
+ {id:'p3',t:'一場吃 3 個道具',g:3,mode:'best',key:'powers',r:80},
+ {id:'sp5',t:'今天輾過 5 個特殊民眾',g:5,mode:'sum',key:'specials',r:120},
+ {id:'g3',t:'今天玩 3 場',g:3,mode:'sum',key:'games',r:60},
+ {id:'st3',t:'一場到達第 3 關',g:3,mode:'best',key:'stage',r:100},
+ {id:'k100',t:'今天累計輾過 100 人',g:100,mode:'sum',key:'kills',r:150}];
+function seedRand(str){let h=1779033703^str.length;for(let i=0;i<str.length;i++){h=Math.imul(h^str.charCodeAt(i),3432918353);h=h<<13|h>>>19;}
+  return function(){h=Math.imul(h^h>>>16,2246822507);h=Math.imul(h^h>>>13,3266489909);return((h^=h>>>16)>>>0)/4294967296;}}
+function todayStr(){const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();}
+function ensureMissions(){
+  const t=todayStr();
+  if(S.missions.date!==t){
+    const rr=seedRand(t),pool=MPOOL.slice(),list=[];
+    while(list.length<3){const m=pool.splice(Math.floor(rr()*pool.length),1)[0];list.push({id:m.id,prog:0,done:false,claimed:false});}
+    S.missions={date:t,list};save();
+  }
+}
+function updateMissions(run){
+  ensureMissions();
+  for(const m of S.missions.list){
+    if(m.done)continue;const d=MPOOL.find(x=>x.id==m.id);const v=run[d.key]||0;
+    m.prog=d.mode=='best'?Math.max(m.prog,v):m.prog+v;
+    if(m.prog>=d.g){m.prog=d.g;m.done=true;toast('📅 任務完成：'+d.t);}
+  }
+}
+function claimable(){ensureMissions();return S.missions.list.filter(m=>m.done&&!m.claimed).length;}
+function openMissions(){show('missions');renderMissions();}
+function renderMissions(){
+  ensureMissions();
+  $('mList').innerHTML=S.missions.list.map((m,i)=>{
+    const d=MPOOL.find(x=>x.id==m.id);
+    const btn=m.claimed?'<button class="btn" disabled>已領取</button>':m.done?`<button class="btn" onclick="claim(${i})">領取 🪙${d.r}</button>`:`<span class="small">🪙${d.r}</span>`;
+    return `<div class="card"><div class="item"><span>${d.t}</span>${btn}</div>
+      <div class="small">${m.prog} / ${d.g}</div><div class="bar"><i style="width:${m.prog/d.g*100}%"></i></div></div>`;}).join('');
+}
+function claim(i){const m=S.missions.list[i];if(!m.done||m.claimed)return;const d=MPOOL.find(x=>x.id==m.id);
+  m.claimed=true;S.coins+=d.r;save();beep(800,.15,'sine',.12,500);renderMissions();}
+
+/* ================= 成就 ================= */
+const ACH=[
+ {id:'first1000',n:'破千大關',d:'單場得分達到 1000',r:100},
+ {id:'combo10',n:'連擊大師',d:'連擊達到 10',r:80},
+ {id:'noshield5',n:'裸跑高手',d:'不用護盾玩到第 5 關',r:300},
+ {id:'kills500',n:'地獄常客',d:'累計輾過 500 人',r:200},
+ {id:'gold',n:'財神到',d:'輾過金色民眾',r:100},
+ {id:'tunnel',n:'穿越黑暗',d:'平安通過一次隧道',r:100},
+ {id:'boost',n:'極速體驗',d:'踩到加速帶',r:50},
+ {id:'switch',n:'被迫轉彎',d:'被轉轍器推開',r:50},
+ {id:'fat',n:'重量級',d:'成功輾倒大胖子',r:80},
+ {id:'games20',n:'老玩家',d:'累計玩 20 場',r:150}];
+function unlock(id){
+  if(S.ach[id])return;const a=ACH.find(x=>x.id==id);if(!a)return;
+  S.ach[id]=1;S.coins+=a.r;save();toast('🏅 成就解鎖：'+a.n+'　+🪙'+a.r);beep(1000,.25,'triangle',.12,500);
+}
+function openAch(){show('achs');
+  $('aList').innerHTML=ACH.map(a=>`<div class="card"><div class="item"><span>${S.ach[a.id]?'✅':'🔒'} <b>${a.n}</b><br><span class="small">${a.d}</span></span><span class="small">🪙${a.r}</span></div></div>`).join('');}
+let toastT=null;
+function toast(t){const e=$('toast');e.textContent=t;e.style.opacity=1;clearTimeout(toastT);toastT=setTimeout(()=>e.style.opacity=0,2600);}
 
 /* ================= 3D 場景 ================= */
 const scene=new THREE.Scene();
@@ -157,6 +277,7 @@ const dl=new THREE.DirectionalLight(0xffccaa,.8);dl.position.set(3,10,5);scene.a
 
 const LX=[-3.2,0,3.2],ZF=-4,ZR=2;
 const mat=c=>new THREE.MeshLambertMaterial({color:c});
+const basic=(c,o)=>new THREE.MeshBasicMaterial(Object.assign({color:c},o||{}));
 const box=(w,h,d,c)=>new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat(c));
 
 const ground=new THREE.Mesh(new THREE.PlaneGeometry(40,300),mat(0x2b0f0f));
@@ -167,12 +288,20 @@ for(let l=0;l<3;l++){
   for(let i=0;i<50;i++){const s=box(2,.1,.4,0x4a2a1a);scene.add(s);sleepers.push(s);}
 }
 const fires=[];
-for(let i=0;i<14;i++){const f=new THREE.Mesh(new THREE.ConeGeometry(.6,2.5,6),new THREE.MeshBasicMaterial({color:i%2?0xff6600:0xff2200}));
+for(let i=0;i<14;i++){const f=new THREE.Mesh(new THREE.ConeGeometry(.6,2.5,6),basic(i%2?0xff6600:0xff2200));
   f.position.x=(i%2?1:-1)*(7+Math.random()*3);f.position.y=1.2;scene.add(f);fires.push(f);}
+// 隧道拱門
+const arches=[];
+for(let i=0;i<8;i++){
+  const g=new THREE.Group();
+  for(const sx of[-5.4,5.4]){const p=box(.8,3.4,.8,0x3a3a3a);p.position.set(sx,1.7,0);g.add(p);}
+  const top=box(11.6,.8,.8,0x3a3a3a);top.position.y=3.6;g.add(top);
+  g.visible=false;scene.add(g);arches.push(g);
+}
 
 function label(txt,color,size=1){
   const c=document.createElement('canvas');c.width=256;c.height=128;const x=c.getContext('2d');
-  x.font='bold 80px sans-serif';x.textAlign='center';x.textBaseline='middle';
+  x.font='bold 70px sans-serif';x.textAlign='center';x.textBaseline='middle';
   x.lineWidth=10;x.strokeStyle='#000';x.strokeText(txt,128,64);x.fillStyle=color;x.fillText(txt,128,64);
   const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),transparent:true,depthTest:false}));
   sp.scale.set(3*size,1.5*size,1);return sp;
@@ -196,11 +325,13 @@ function bogie(c){const g=new THREE.Group();
   for(const sx of[-.9,.9])for(const sz of[-.55,.55]){const w=new THREE.Mesh(new THREE.CylinderGeometry(.35,.35,.2,12),mat(0));w.rotation.z=Math.PI/2;w.position.set(sx,.35,sz);g.add(w);}
   scene.add(g);return g;}
 const bF=bogie(0x8e44ad),bR=bogie(0xd35400);
-const lamp=new THREE.Mesh(new THREE.SphereGeometry(.25),new THREE.MeshBasicMaterial({color:0xffaa00}));lamp.position.set(0,.9,-.95);bF.add(lamp);
-const shieldMesh=new THREE.Mesh(new THREE.SphereGeometry(1.6,16,12),new THREE.MeshBasicMaterial({color:0x4aa3ff,transparent:true,opacity:.3}));
+const lamp=new THREE.Mesh(new THREE.SphereGeometry(.25),basic(0xffaa00));lamp.position.set(0,.9,-.95);bF.add(lamp);
+const lampLight=new THREE.PointLight(0xffaa00,1.2,16);lampLight.position.set(0,1,-2);bF.add(lampLight);
+const shieldMesh=new THREE.Mesh(new THREE.SphereGeometry(1.6,16,12),basic(0x4aa3ff,{transparent:true,opacity:.3}));
 shieldMesh.visible=false;scene.add(shieldMesh);
 function applySkin(){const k=SKINS[S.skin]||SKINS[0];
-  bF.children[0].material.color.set(k.f);bR.children[0].material.color.set(k.r);body.material.color.set(k.b);}
+  bF.children[0].material.color.set(k.f);bR.children[0].material.color.set(k.r);body.material.color.set(k.b);
+  lamp.material.color.set(k.lamp);lampLight.color.set(k.lamp);}
 applySkin();
 
 const TYPES=[{m:1,w:50,c:'#bdc3c7'},{m:2,w:30,c:'#2ecc71'},{m:3,w:14,c:'#3498db'},{m:5,w:6,c:'#f1c40f'}];
@@ -211,8 +342,11 @@ const rnd=a=>a[Math.random()*a.length|0];
 function pickType(){let t=Math.random()*100;for(const ty of TYPES){if((t-=ty.w)<0)return ty;}return TYPES[0];}
 
 function makePerson(){
-  const ty=pickType(),g=new THREE.Group();
-  const sh=rnd(SHIRT),sk=rnd(SKIN),hr=rnd(HAIR);
+  let sp=null;const r=Math.random();
+  if(r<.03)sp='gold';else if(r<.11)sp='fat';else if(r<.21)sp='runner';
+  const ty=sp=='gold'?{m:10,c:'#ffd700'}:pickType();
+  const g=new THREE.Group();
+  const sh=sp=='gold'?0xffd700:rnd(SHIRT),sk=rnd(SKIN),hr=sp=='gold'?0xffd700:rnd(HAIR);
   const torso=box(.7,.4,1.6,sh);torso.position.set(0,.25,.4);g.add(torso);
   const head=new THREE.Mesh(new THREE.SphereGeometry(.38,12,12),mat(sk));head.position.set(0,.4,-.6);g.add(head);
   const hair=new THREE.Mesh(new THREE.SphereGeometry(.4,12,8,0,Math.PI*2,0,Math.PI/2),mat(hr));hair.position.set(0,.45,-.6);g.add(hair);
@@ -221,30 +355,49 @@ function makePerson(){
   if(Math.random()<.3){const gl=box(.55,.1,.05,0);gl.position.set(0,.5,-.95);g.add(gl);}
   for(const z of[.1,.7]){const rope=box(1.1,.12,.12,0x8b5a2b);rope.position.set(0,.5,z);g.add(rope);}
   for(const sx of[-.55,.55]){const arm=box(.2,.2,.8,sk);arm.position.set(sx,.2,.2);g.add(arm);}
-  const ring=new THREE.Mesh(new THREE.TorusGeometry(1.3,.08,6,24),new THREE.MeshBasicMaterial({color:ty.c}));
+  const ring=new THREE.Mesh(new THREE.TorusGeometry(1.3,.08,6,24),basic(ty.c));
   ring.rotation.x=Math.PI/2;ring.position.y=.1;g.add(ring);
-  const lb=label('×'+ty.m,ty.c);lb.position.y=2.3;g.add(lb);
-  g.userData={k:'p',ty,half:1};return g;
+  const txt=sp=='gold'?'💰×10':sp=='fat'?'🍔×'+ty.m:sp=='runner'?'💨×'+ty.m:'×'+ty.m;
+  const lb=label(txt,ty.c);lb.position.y=2.3;g.add(lb);
+  if(sp=='fat')g.scale.set(1.5,1.3,1.1);
+  if(sp=='gold')g.visible=false;
+  g.userData={k:'p',ty,half:1,sp,t:0};return g;
 }
 function makeObstacle(){
   const g=new THREE.Group(),r=Math.random();
-  if(r<.25){
+  if(r<.2){
     const b=box(2.2,2.2,14,0x7a1010);b.position.y=1.2;g.add(b);
     const f=box(2.3,1.2,.3,0xffee88);f.position.set(0,1.4,7.1);g.add(f);
     const w=box(2.25,.5,14.1,0x111111);w.position.y=1.5;g.add(w);
     g.userData={k:'o',half:7};
+  }else if(r<.35&&stage>=2){
+    const pit=box(2.6,.4,3.2,0x000000);pit.position.y=.2;g.add(pit);
+    for(const sz of[-1.6,1.6]){const e=box(2.7,.45,.2,0xff3b30);e.position.set(0,.22,sz);g.add(e);}
+    g.userData={k:'o',half:1.6,gap:true};
   }else{
-    const t=r<.6;
+    const t=r<.65;
     const b=box(2.2,1.6,1,t?0x555555:0x7f8c8d);b.position.y=.8;g.add(b);
     for(let i=-1;i<=1;i++){const s=box(.4,1.65,1.05,i%2?(t?0xff3b30:0xf1c40f):0x111111);s.position.set(i*.7,.8,0);s.rotation.z=.4;g.add(s);}
     g.userData={k:'o',half:.5};
   }
   return g;
 }
+function makeSwitch(){
+  const g=new THREE.Group(),dir=Math.random()<.5?-1:1;
+  const p=box(2.2,.2,2.4,0xf1c40f);p.position.y=.15;g.add(p);
+  const lb=label(dir<0?'◀◀':'▶▶','#ff8800',1.1);lb.position.y=1;g.add(lb);
+  g.userData={k:'s',half:1.1,dir};return g;
+}
+function makeBoost(){
+  const g=new THREE.Group();
+  const p=new THREE.Mesh(new THREE.BoxGeometry(2.2,.15,3),basic(0x2ecc71,{transparent:true,opacity:.85}));p.position.y=.15;g.add(p);
+  const lb=label('⚡','#fff',1.2);lb.position.y=.9;g.add(lb);
+  g.userData={k:'b',half:1.4};return g;
+}
 const PU={shield:{i:'🛡',c:0x4aa3ff},x2:{i:'✨',c:0xffd700},slow:{i:'⏱',c:0x2ecc71}};
 function makePower(){
   const kind=rnd(Object.keys(PU)),g=new THREE.Group();
-  const orb=new THREE.Mesh(new THREE.SphereGeometry(.6,14,12),new THREE.MeshBasicMaterial({color:PU[kind].c,transparent:true,opacity:.8}));
+  const orb=new THREE.Mesh(new THREE.SphereGeometry(.6,14,12),basic(PU[kind].c,{transparent:true,opacity:.8}));
   orb.position.y=1.3;g.add(orb);
   const lb=label(PU[kind].i,'#fff',.8);lb.position.y=1.3;g.add(lb);
   g.userData={k:'u',kind,half:.8};return g;
@@ -252,19 +405,24 @@ function makePower(){
 
 /* ================= 遊戲狀態 ================= */
 let st='lobby',score=0,speed=22,dist=0,items=[],nextZ=-40,combo=0,kills=0,shake=0,flash=0,stage=1;
-let shield=false,dbl=0,slow=0,paused=false;
+let shield=false,dbl=0,slow=0,boost=0,tunnel=0,tunnelCd=25,paused=false;
+let run={},usedShield=false;
 let rear={l:1,x:0},front={l:1,x:0},parts=[],splats=[],pops=[],last=performance.now();
 function clearAll(){for(const a of[items,parts,splats,pops])for(const o of a)scene.remove(o.m||o);items=[];parts=[];splats=[];pops=[];}
-function reset(){clearAll();score=0;speed=22;dist=0;nextZ=-40;combo=0;kills=0;stage=1;shield=!!S.up.shield;dbl=0;slow=0;paused=false;
+function reset(){clearAll();score=0;speed=22;dist=0;nextZ=-40;combo=0;kills=0;stage=1;
+  shield=!!S.up.shield;usedShield=shield;dbl=0;slow=0;boost=0;tunnel=0;tunnelCd=25;paused=false;
+  run={kills:0,score:0,combo:0,powers:0,specials:0,stage:1,games:1};
   rear={l:1,x:0};front={l:1,x:0};scene.background.set(0x1a0000);scene.fog.color.set(0x2a0500);}
 function spawnRow(){
   let obs=[];
-  if(Math.random()<.55){const n=Math.random()<.25?2:1;while(obs.length<n){const l=Math.random()*3|0;if(!obs.includes(l))obs.push(l);}}
+  if(Math.random()<.5){const n=Math.random()<.25?2:1;while(obs.length<n){const l=Math.random()*3|0;if(!obs.includes(l))obs.push(l);}}
+  const pp=tunnel>0?.8:.5;
   for(let l=0;l<3;l++){
     let m=null;
     if(obs.includes(l))m=makeObstacle();
-    else if(Math.random()<.07)m=makePower();
-    else if(Math.random()<.5)m=makePerson();
+    else{const r=Math.random();
+      if(r<.06)m=makePower();else if(r<.10)m=makeSwitch();else if(r<.14)m=makeBoost();
+      else if(Math.random()<pp)m=makePerson();}
     if(m){m.position.set(LX[l],0,nextZ);m.userData.lane=l;scene.add(m);items.push(m);}
   }
   nextZ-=Math.max(13,22-speed*.2)+Math.random()*5;
@@ -290,11 +448,10 @@ function show(id){
 }
 function renderLobby(){
   st='lobby';
-  $('lobbyInfo').innerHTML=`👤 <b>${S.name}</b>　🪙 <b style="color:#f1c40f">${S.coins}</b><br>
-   🏆 最高分 ${S.best}　🎮 場數 ${S.games}<br>💀 累計輾過 ${S.kills}　🔥 最高關卡 ${S.maxStage}<br>
-   🚆 目前列車：${SKINS[S.skin].n}`;
-  const h=[...S.hist].sort((a,b)=>b.s-a.s).slice(0,5);
-  $('board').innerHTML='<b>🏅 本機排行榜</b><br>'+(h.length?h.map((x,i)=>`${i+1}. ${x.s} 分　<span style="color:#888">${x.d}</span>`).join('<br>'):'還沒有紀錄');
+  $('lobbyInfo').innerHTML=`👤 <b>${esc(S.name)}</b>　🪙 <b style="color:#f1c40f">${S.coins}</b><br>
+   🏆 最高分 ${S.best}　🎮 場數 ${S.games}<br>累計輾過 ${S.kills}　最高關卡 ${S.maxStage}<br>
+   目前列車：${SKINS[S.skin].n}`;
+  const c=claimable();$('mDot').innerHTML=c?`<span class="dot">${c}</span>`:'';
 }
 function startGame(){
   reset();applySkin();st='play';show(null);$('pause').textContent='⏸';last=performance.now();beep(200,.2,'sawtooth',.1,300);
@@ -310,11 +467,11 @@ function quitToLobby(){paused=false;st='lobby';clearAll();show('lobby');renderLo
 function openShop(){show('shop');renderShop();}
 function renderShop(){
   $('coinBar').textContent='🪙 '+S.coins;
-  let h='<div class="card"><b>🚆 列車外觀</b>';
+  let h='<div class="card"><b>🚆 列車外觀（含車燈與輾過特效）</b>';
   SKINS.forEach((k,i)=>{
     const own=S.owned.includes(i),sel=S.skin==i;
     const sw=c=>`<span class="sw" style="background:#${c.toString(16).padStart(6,'0')}"></span>`;
-    h+=`<div class="item"><span>${sw(k.f)}${sw(k.b)}${sw(k.r)} ${k.n}</span>`+
+    h+=`<div class="item"><span>${sw(k.f)}${sw(k.b)}${sw(k.r)} ${k.n} ${FXS[k.fx].icon}</span>`+
       (sel?'<button class="btn" disabled>使用中</button>':own?`<button class="btn" onclick="useSkin(${i})">使用</button>`:`<button class="btn" onclick="buySkin(${i})" ${S.coins<k.cost?'disabled':''}>🪙${k.cost}</button>`)+'</div>';
   });
   h+='</div><div class="card"><b>⚡ 升級</b>';
@@ -328,42 +485,62 @@ function buySkin(i){const k=SKINS[i];if(S.coins>=k.cost){S.coins-=k.cost;S.owned
 function buyShield(){if(S.coins>=250&&!S.up.shield){S.coins-=250;S.up.shield=true;save();renderShop();beep(800,.15,'sine',.12,500);}}
 function buyDur(){const c=[150,300,500][S.up.dur];if(S.up.dur<3&&S.coins>=c){S.coins-=c;S.up.dur++;save();renderShop();beep(800,.15,'sine',.12,500);}}
 
+/* ================= 排行榜 ================= */
+async function submitScore(){
+  if(!FB_URL||score<=0)return;
+  try{await fetch(FB_URL+'/scores.json',{method:'POST',body:JSON.stringify({name:S.name.slice(0,10),score:score,t:Date.now()})});}catch(e){}
+}
+async function openLB(){
+  show('lb');const box=$('lbBody');
+  const local=[...S.hist].sort((a,b)=>b.s-a.s).slice(0,5);
+  const localHtml='<b>本機最佳</b><br>'+(local.length?local.map((x,i)=>`${i+1}. ${x.s} 分　<span class="small">${x.d}</span>`).join('<br>'):'還沒有紀錄');
+  if(!FB_URL){box.innerHTML='<div class="small">尚未設定 Firebase，只顯示本機紀錄。<br>在程式最上方的 FB_URL 填入你的 Realtime Database 網址就能啟用全球排行榜。</div><br>'+localHtml;return;}
+  box.innerHTML='載入中…';
+  try{
+    const r=await fetch(FB_URL+'/scores.json?orderBy=%22score%22&limitToLast=20');
+    const o=await r.json();
+    const arr=Object.values(o||{}).sort((a,b)=>b.score-a.score).slice(0,10);
+    box.innerHTML='<b>🌍 全球前 10 名</b><br>'+(arr.length?arr.map((x,i)=>`${['🥇','🥈','🥉'][i]||(i+1)+'.'} ${esc(x.name)}　<b>${x.score}</b>`).join('<br>'):'還沒有人上榜')+'<br><br>'+localHtml;
+  }catch(e){box.innerHTML='無法連線到排行榜<br><br>'+localHtml;}
+}
+
 /* ================= 設定 / 存檔管理 ================= */
 function openSettings(){show('settings');renderSettings();}
-function renderSettings(){
-  $('nm').textContent=S.name;
-  $('tSound').textContent=S.sound?'開':'關';$('tVib').textContent=S.vib?'開':'關';
-}
+function renderSettings(){$('nm').textContent=S.name;$('tSound').textContent=S.sound?'開':'關';$('tVib').textContent=S.vib?'開':'關';}
 function toggle(k){S[k]=!S[k];save();renderSettings();}
 function rename(){const n=prompt('輸入玩家名稱（最多 10 字）',S.name);if(n&&n.trim()){S.name=n.trim().slice(0,10);save();renderSettings();}}
 function exportSave(){$('codeBox').value=btoa(unescape(encodeURIComponent(JSON.stringify(S))));$('codeBox').select();}
 function importSave(){
   try{const o=JSON.parse(decodeURIComponent(escape(atob($('codeBox').value.trim()))));
     if(typeof o!='object'||o.v!==1)throw 0;
-    S=Object.assign(defSave(),o);S.up=Object.assign({shield:false,dur:0},o.up||{});
-    save();applySkin();renderSettings();alert('匯入成功！');
+    mergeSave(o);save();applySkin();renderSettings();alert('匯入成功！');
   }catch(e){alert('存檔碼無效');}
 }
 function wipe(){if(confirm('確定要清除全部存檔嗎？無法復原！')){S=defSave();save();applySkin();renderSettings();}}
 
 /* ================= 特效 ================= */
-function burst(x,z,col){
+function burstColor(i){const fx=FXS[SKINS[S.skin].fx];
+  if(!fx.c)return new THREE.Color().setHSL(Math.random(),1,.55).getHex();return fx.c[i%2];}
+function burst(x,z){
+  const fx=FXS[SKINS[S.skin].fx];
   for(let i=0;i<30;i++){
-    const m=box(.15,.15,.15,i%2?0xcc0000:col);m.position.set(x,.5,z);scene.add(m);
+    const m=box(.15,.15,.15,burstColor(i));m.position.set(x,.5,z);scene.add(m);
     parts.push({m,v:new THREE.Vector3((Math.random()-.5)*8,Math.random()*7,(Math.random()-.5)*8),t:0});
   }
-  const sk=label('💀','#fff',.8);sk.position.set(x,2,z);scene.add(sk);parts.push({m:sk,v:new THREE.Vector3(0,3,0),t:0,s:true});
+  const sk=label(fx.icon,'#fff',.8);sk.position.set(x,2,z);scene.add(sk);parts.push({m:sk,v:new THREE.Vector3(0,3,0),t:0,s:true});
 }
 function pop(x,z,txt,c){const s=label(txt,c,1.2);s.position.set(x,3,z);scene.add(s);pops.push({m:s,t:0});}
 function splat(x,z){
+  const fx=FXS[SKINS[S.skin].fx];
   for(let i=0;i<5;i++){
-    const m=new THREE.Mesh(new THREE.CircleGeometry(.2+Math.random()*.5,10),new THREE.MeshBasicMaterial({color:0x8b0000}));
+    const m=new THREE.Mesh(new THREE.CircleGeometry(.2+Math.random()*.5,10),basic(fx.c?fx.splat:new THREE.Color().setHSL(Math.random(),.8,.4).getHex()));
     m.rotation.x=-Math.PI/2;m.position.set(x+(Math.random()-.5)*1.6,.2,z+(Math.random()-.5)*2.5);scene.add(m);splats.push(m);
   }
 }
 const STAGECOL=[[0x1a0000,0x2a0500],[0x100020,0x1a0030],[0x001a1a,0x002a2a],[0x201000,0x3a2000]];
+function banner(t){const s=$('stage');s.textContent=t;s.style.opacity=1;setTimeout(()=>s.style.opacity=0,1400);}
 function showStage(){
-  const s=$('stage');s.textContent='第 '+stage+' 關';s.style.opacity=1;setTimeout(()=>s.style.opacity=0,1400);
+  banner('第 '+stage+' 關');
   const c=STAGECOL[(stage-1)%STAGECOL.length];scene.background.set(c[0]);scene.fog.color.set(c[1]);beep(500,.3,'triangle',.1,400);
 }
 
@@ -376,42 +553,85 @@ function gameOver(){
   if(newBest)S.best=score;
   const d=new Date();S.hist.push({s:score,d:`${d.getMonth()+1}/${d.getDate()}`});
   S.hist=S.hist.sort((a,b)=>b.s-a.s).slice(0,20);
-  save();
+  run.score=score;run.kills=kills;run.stage=stage;
+  updateMissions(run);
+  if(S.kills>=500)unlock('kills500');
+  if(S.games>=20)unlock('games20');
+  save();submitScore();
   $('overInfo').innerHTML=`得分：<b style="font-size:26px">${score}</b> ${newBest?'<span style="color:#f1c40f">🎉 新紀錄！</span>':''}<br>
-   輾過：${kills} 人　到達第 ${stage} 關<br>🪙 獲得地獄幣 +${earn}（共 ${S.coins}）<br>最高分：${S.best}`;
+   輾過：${kills} 人　最高連擊 ${run.combo}<br>到達第 ${stage} 關　特殊民眾 ${run.specials}<br>🪙 獲得地獄幣 +${earn}（共 ${S.coins}）<br>最高分：${S.best}`;
   setTimeout(()=>{if(st=='over')show('over');},700);
 }
 
+/* ================= 主更新 ================= */
+function hitBogie(b,z,it){
+  const u=it.userData;
+  if(u.k=='o'){
+    if(shield){shield=false;u.dead=true;scene.remove(it);shake=.3;flash=.4;beep(180,.3,'sawtooth',.15,-60);vib(80);pop(LX[u.lane],z,'護盾破裂','#4aa3ff');return;}
+    gameOver();return;}
+  if(u.k=='u'){
+    u.dead=true;scene.remove(it);beep(800,.15,'sine',.12,500);run.powers++;
+    if(u.kind=='shield'){shield=true;usedShield=true;}
+    if(u.kind=='x2')dbl=10+S.up.dur*3;if(u.kind=='slow')slow=6+S.up.dur*2;
+    pop(LX[u.lane],z,PU[u.kind].i,'#fff');return;}
+  if(u.k=='s'){
+    u.dead=true;scene.remove(it);let nl=b.l+u.dir;if(nl<0||nl>2)nl=b.l-u.dir;b.l=nl;
+    shake=.2;beep(250,.2,'sawtooth',.12,150);vib(60);pop(LX[u.lane],z,'轉轍器！','#ff8800');unlock('switch');return;}
+  if(u.k=='b'){
+    u.dead=true;scene.remove(it);boost=4;beep(600,.3,'triangle',.12,600);pop(LX[u.lane],z,'加速 ×1.5','#2ecc71');unlock('boost');return;}
+  // 民眾
+  if(u.sp=='fat'){
+    if(!u.hits)u.hits=new Set();
+    if(u.hits.has(b))return;
+    u.hits.add(b);
+    if(u.hits.size<2){pop(LX[u.lane],z,'再輾一次！','#ff9f43');shake=.1;beep(150,.1,'square',.15,-30);return;}
+  }
+  u.dead=true;scene.remove(it);combo=Math.min(combo+1,10);kills++;shake=.15;flash=.3;
+  run.combo=Math.max(run.combo,combo);if(u.sp){run.specials++;}
+  let base=u.ty.m*10;if(u.sp=='fat')base*=3;
+  const mult=(dbl>0?2:1)*(boost>0?1.5:1);
+  const pts=Math.round(base*(1+Math.floor(combo/3)*.5)*mult);score+=pts;
+  pop(LX[u.lane],z,'+'+pts,u.ty.c);burst(LX[u.lane],z);splat(LX[u.lane],z);
+  beep(90,.15,'square',.15,-40);vib(30);
+  if(combo>=10)unlock('combo10');
+  if(u.sp=='gold')unlock('gold');if(u.sp=='fat')unlock('fat');
+  if(score>=1000)unlock('first1000');
+  const ns=1+Math.floor(score/400);
+  if(ns>stage){stage=ns;showStage();speed+=2;if(stage>=5&&!usedShield)unlock('noshield5');}
+}
 function update(rdt){
   const dt=rdt*(slow>0?.6:1);
-  speed=Math.min(55,speed+dt*.6);dist+=speed*dt;
-  if(dbl>0)dbl-=rdt;if(slow>0)slow-=rdt;
+  speed=Math.min(55,speed+dt*.6);
+  const sp=speed*(boost>0?1.35:1);
+  dist+=sp*dt;
+  if(dbl>0)dbl-=rdt;if(slow>0)slow-=rdt;if(boost>0)boost-=rdt;
+  if(tunnel>0){tunnel-=rdt;if(tunnel<=0){banner('出隧道了');unlock('tunnel');}}
+  else{tunnelCd-=rdt;if(tunnelCd<=0){tunnel=8;tunnelCd=30+Math.random()*15;banner('🌑 進入隧道');}}
   for(const b of[rear,front])b.x+=(LX[b.l]-b.x)*Math.min(1,rdt*18);
-  nextZ+=speed*dt;
+  nextZ+=sp*dt;
   while(nextZ>-110)spawnRow();
   for(const it of items){
-    it.position.z+=speed*dt;
+    it.position.z+=sp*dt;
     const u=it.userData;if(u.dead)continue;
-    for(const [b,z] of[[front,ZF],[rear,ZR]]){
-      if(u.lane==b.l&&Math.abs(it.position.z-z)<u.half+.8){
-        if(u.k=='o'){
-          if(shield){shield=false;u.dead=true;scene.remove(it);shake=.3;flash=.4;beep(180,.3,'sawtooth',.15,-60);vib(80);pop(LX[u.lane],z,'護盾破裂','#4aa3ff');continue;}
-          gameOver();return;}
-        if(u.k=='u'){
-          u.dead=true;scene.remove(it);beep(800,.15,'sine',.12,500);
-          if(u.kind=='shield')shield=true;if(u.kind=='x2')dbl=10+S.up.dur*3;if(u.kind=='slow')slow=6+S.up.dur*2;
-          pop(LX[u.lane],z,PU[u.kind].i,'#fff');continue;}
-        u.dead=true;scene.remove(it);combo=Math.min(combo+1,10);kills++;shake=.15;flash=.3;
-        const pts=Math.round(u.ty.m*10*(1+Math.floor(combo/3)*.5)*(dbl>0?2:1));score+=pts;
-        pop(LX[u.lane],z,'+'+pts,u.ty.c);burst(LX[u.lane],z,0xff3333);splat(LX[u.lane],z);
-        beep(90,.15,'square',.15,-40);vib(30);
-        const ns=1+Math.floor(score/400);if(ns>stage){stage=ns;showStage();speed+=2;}
-      }
+    if(u.sp=='runner'&&!u.moved&&it.position.z>-36){
+      u.moved=true;let nl=u.lane+(Math.random()<.5?-1:1);if(nl<0||nl>2)nl=u.lane==0?1:u.lane-1;
+      u.lane=nl;u.tx=LX[nl];beep(700,.1,'sine',.08);
     }
+    if(u.tx!==undefined)it.position.x+=(u.tx-it.position.x)*Math.min(1,rdt*6);
+    if(u.sp=='gold'){
+      if(!u.shown&&it.position.z>-34){u.shown=true;it.visible=true;beep(1300,.12,'sine',.1);}
+      if(u.shown){u.t+=rdt;if(u.t>1.3){u.dead=true;scene.remove(it);continue;}}
+      else continue;
+    }
+    for(const [b,z] of[[front,ZF],[rear,ZR]]){
+      if(u.dead||st!='play')break;
+      if(u.lane==b.l&&Math.abs(it.position.z-z)<u.half+.8)hitBogie(b,z,it);
+    }
+    if(st!='play')return;
     if(!u.dead&&u.k=='p'&&it.position.z>ZR+4){u.dead=true;scene.remove(it);combo=0;}
   }
   items=items.filter(i=>!i.userData.dead&&i.position.z<ZR+20);
-  for(const s of splats)s.position.z+=speed*dt;
+  for(const s of splats)s.position.z+=sp*dt;
   splats=splats.filter(s=>{if(s.position.z>15){scene.remove(s);return false}return true});
   for(const p of parts){p.t+=rdt;p.m.position.addScaledVector(p.v,rdt);if(!p.s)p.v.y-=20*rdt;p.m.position.y=Math.max(.1,p.m.position.y);}
   parts=parts.filter(p=>{if(p.t>(p.s?1:.9)){scene.remove(p.m);return false}return true});
@@ -419,19 +639,23 @@ function update(rdt){
   pops=pops.filter(p=>{if(p.t>1){scene.remove(p.m);return false}return true});
   $('sc').textContent='得分 '+score;$('sub').textContent='最高 '+Math.max(S.best,score)+'　輾過 '+kills+'　第'+stage+'關';
   $('cb').textContent=combo>1?'連擊 '+combo:'';
-  $('stat').textContent=(shield?'🛡 ':'')+(dbl>0?'✨'+Math.ceil(dbl)+'s ':'')+(slow>0?'⏱'+Math.ceil(slow)+'s':'');
+  $('stat').textContent=(shield?'🛡 ':'')+(dbl>0?'✨'+Math.ceil(dbl)+'s ':'')+(slow>0?'⏱'+Math.ceil(slow)+'s ':'')+(boost>0?'⚡'+Math.ceil(boost)+'s ':'')+(tunnel>0?'🌑':'');
 }
 function render(){
-  // 大廳時列車慢慢前進當背景
   if(st=='lobby'){dist+=6*(1/60);front.x=rear.x=0;}
   bF.position.set(front.x,0,ZF);bR.position.set(rear.x,0,ZR);
   const a=new THREE.Vector3(front.x,1.5,ZF),b=new THREE.Vector3(rear.x,1.5,ZR);
   body.position.copy(a).add(b).multiplyScalar(.5);
   body.scale.z=a.distanceTo(b);body.lookAt(a);
   shieldMesh.visible=shield&&st!='lobby';shieldMesh.position.copy(body.position);shieldMesh.scale.set(1,1,1+body.scale.z*.5);shieldMesh.lookAt(a);
+  if(SKINS[S.skin].fx=='rainbow'){const c=new THREE.Color().setHSL((performance.now()/1000)%1,1,.6);lamp.material.color.copy(c);lampLight.color.copy(c);}
   const off=dist%3;let i=0;
   for(let l=0;l<3;l++)for(let k=0;k<50;k++)sleepers[i++].position.set(LX[l],.05,-k*3+10+off);
   fires.forEach((f,i)=>{f.position.z=((-i*10+dist)%140)-120;f.scale.y=1+Math.sin(performance.now()/100+i)*.2;});
+  const inT=st=='play'&&tunnel>0;
+  arches.forEach((g,i)=>{const z=((i*14+dist)%112)-104;g.position.z=z;g.visible=inT&&z<-8;});
+  const tn=inT?6:30,tf=inT?42:110;
+  scene.fog.near+=(tn-scene.fog.near)*.05;scene.fog.far+=(tf-scene.fog.far)*.05;
   const sh=shake>0?(Math.random()-.5)*.5:0;
   camera.position.set((front.x+rear.x)*.12+sh,(camera.aspect<.8?9.5:8)+sh,camera.aspect<.8?11:9);
   camera.lookAt((front.x+rear.x)*.3,0,-9);
@@ -445,6 +669,7 @@ function loop(t){
   render();requestAnimationFrame(loop);
 }
 $('pause').addEventListener('click',togglePause);
+ensureMissions();
 show('lobby');renderLobby();
 requestAnimationFrame(loop);
 </script>
